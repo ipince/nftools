@@ -30,9 +30,13 @@ FAQ = '''
 <ul><li>It's a website to look up and analyze <a href="https://metroverse.com/">Metroverse</a> blocks, so you can make informed strategic and financial decisions! You're always told to DYOR—here, you can!
 </ul>
 
+<li>Why not use the <a href="https://blocks.metroverse.com">Metroverse block explorer</a>?
+<ul><li>The Metroverse block explorer is absolutely <em>beautiful</em>, but it's a bit hard to find all the buildings in your block at-a-glance, and to see whether you'll get neighborhood boosts or not with your set of blocks.
+</ul>
+
 <li>Where does the data come from?
 <ul><li>There's two types of data. The data for a block itself comes the NFTs themselves. I extracted the data from IPFS. Here's an <a href="https://ipfs.io/ipfs/QmR2wmDSCcbZnByZJrhJk92ZxtSmxxw5965cyJ4veV8qXA/1">example</a> of the raw data for a block.
-<li>The data for buildings, their scores, "weights", and the neighborhood boosts, come straight out of the Metroverse docs (buildings and boosts).
+<li>The data for buildings, their scores, "weights", and the neighborhood boosts, come straight out of the <a href="https://docs.metroverse.com/introduction/summary">Metroverse docs</a> (buildings and boosts).
 </ul>
 
 <li>How do Metroverse blocks work?

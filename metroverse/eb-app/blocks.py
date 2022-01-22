@@ -15,7 +15,7 @@ def index():
 def get_block(block_number):
   try:
     idx = int(block_number)
-    return content.with_body(mv.bstr(BLOCKS[idx-1]) + boosts_str(), 'blocks')
+    return content.with_body(render_block(BLOCKS[idx-1]) + boosts_str(), 'blocks')
   except Exception as e:
     print("got exception...")
     print(e)
@@ -24,7 +24,43 @@ def get_block(block_number):
 
 
 def render_block(block):
-  return ""
+  strs = []
+  types = ['res', 'com', 'ind']
+  for t in types:
+    bldg_strs = []
+    bldgs = list(block['buildings'][t].values())
+    bldgs = sorted(bldgs, key=lambda b: b['weight'])
+    for build in bldgs:
+      s = f"    {build['name']} (score {build['score']}, weight {build['weight']}) "
+
+      if 'boost_name' in build:
+        s += f" <b>[{build['boost_name']} - {build['pct']}%]</b>"
+      bldg_strs.append(s+"\n")
+    strs.append(bldg_strs)
+
+  pubs = []
+  for pub in block['buildings']['pub'].values():
+    s = f"    {pub['name']}"
+    if 'boost_name' in pub:
+      s += f" <b>[{pub['boost_name']} - {pub['pct']}%]</b>"
+    pubs.append(s)
+
+  bnum = block['name'][7:]
+  return f"""
+<h1 style="margin-bottom: 0">{block['name']}</h1>
+<small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href='https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{bnum}'>OpenSea</a>)
+</small>
+
+<p>Total Score: <b>{block['scores']['Score: Total']}</b>
+<p>Residential (Score {block['scores']['Score: Residential']}):
+  <ul><li>{'<li>'.join(strs[0])}</ul>
+<p>Commercial (Score {block['scores']['Score: Commercial']}):
+  <ul><li>{'<li>'.join(strs[1])}</ul>
+<p>Industrial (Score {block['scores']['Score: Industrial']}):
+  <ul><li>{'<li>'.join(strs[2])}</ul>
+<p>Public:
+  <ul><li>{'<li>'.join(pubs)}</ul>
+"""
 
 def load_blocks():
   (blocks, buildings, public, boosts) = mv.load_data()
