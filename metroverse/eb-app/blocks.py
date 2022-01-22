@@ -15,10 +15,11 @@ def index():
 def get_block(block_number):
   try:
     idx = int(block_number)
+    block = BLOCKS[idx-1]
     body = f"""
     <div class="row">
-      <div class="column">{render_block(BLOCKS[idx-1])}</div>
-      <div class="column">{render_boosts()}</div>
+      <div class="column">{render_block(block)}</div>
+      <div class="column">{render_boosts(block)}</div>
     </div>
     """
     return content.with_body(body, 'blocks')
@@ -70,15 +71,26 @@ def render_block(block):
 </div>
 """
 
-def render_boosts():
+def render_boosts(block):
+  names = block['buildings']['all'].keys()
   s = """
 <h2 style="margin-bottom: 2">Neighborhoods Boosts</h2>
 <small>(reference <a href='https://docs.metroverse.com/overview/neighborhood-boost#list-of-neighborhood-boosts'>docs</a>)</small>
-<ul>
+<p>
+<table>
 """
-  for b in BOOSTS:
-    s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
-  return s+"</ul>"
+  s += "<tr><th>Name</th><th>Building 1</th><th>Building 2</th><th>Building 3</th><th>Boost %</th></tr>"
+  for boost in BOOSTS:
+    s += f"<tr><td>{boost['name']}</td>"
+    for b in boost['buildings']:
+      if b in names:
+        s += f"<td style='background: darkseagreen'>{b}</td>"
+      else:
+        s += f"<td>{b}</td>"
+    s += f"<td>{boost['pct']}%</td>"
+    s += "</tr>"
+#    s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
+  return s+"</table>"
 
 
 def load_blocks():

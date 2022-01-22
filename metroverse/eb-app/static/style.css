@@ -39,3 +39,17 @@ body {
 .column {
   flex: 50%;
 }
+
+table {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14;
+  border-collapse: collapse;
+  width: 90%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
