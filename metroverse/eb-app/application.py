@@ -11,6 +11,8 @@ application.add_url_rule('/b/<block_number>', 'block', blocks.get_block)
 
 application.add_url_rule('/hood', 'hood', blocks.hood)
 application.add_url_rule('/hood/<blocks>', 'hood', blocks.hood)
+
+application.add_url_rule('/buildings', 'buildings', blocks.buildings)
 application.add_url_rule('/faq', 'faq', content.faq)
 
 # run the app.

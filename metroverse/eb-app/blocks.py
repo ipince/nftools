@@ -64,6 +64,25 @@ def hood(blocks=None):
     traceback.print_exc()
     return content.with_body("Failed to understand input. Please use comma-separated list of block numbers, like this: <code><a href='/hood/1,2,3'>1,2,3</a></code>", 'hoods')
 
+def buildings():
+  body = """
+  <h1>Buildings</h1>
+  <p>Curious about which buildings are most rare? Ask no more!
+  <p>
+  <table>
+  """
+  # TODO: pre-compute this. add type. fix total counts.
+  (buildings, bcounts, counts) = mv.buildings_by_rarity(BLOCKS, BUILDINGS, PUBLIC)
+  body += "<tr><th>Building Name</th><th>Number of Blocks that have it</th></tr>"
+  for b in buildings:
+    body += "<tr>"
+    body += f"<td>{b}</td><td>{bcounts[b]}</td>"#<td>{counts[b]}</td>"
+    body += "</tr>"
+
+  body += "</table>"
+
+  return content.with_body(body, 'buildings')
+
 
 def render_block(block):
   strs = []
@@ -136,12 +155,5 @@ def render_boosts(blocks=None):
   return s+"</table>"
 
 
-def load_blocks():
-  (blocks, buildings, public, boosts) = mv.load_data()
-  (buildings, public) = mv.transform_buildings(buildings, public, boosts)
-  blocks = mv.transform(blocks, buildings, public)
-  print("loaded")
-  return (blocks, boosts)
-
-(BLOCKS, BOOSTS) = load_blocks()
+(BLOCKS, BOOSTS, BUILDINGS, PUBLIC) = mv.load_all()
 

@@ -4,55 +4,11 @@ import sys
 import time
 from collections import defaultdict
 
-BEST = [
-  # 1
-  "RDC Tower",
-
-  # 15
-  "Soccer Stadium",
-  "Football Stadium",
-
-  # 20 res
-"Winter Mega-Mansion",
-"Radiant Towers Tall",
-"Woodridge Center Tall",
-"Hoodville Towers Tall",
-
-  # 20 comm
-"Metro Trade Center Tall",
-"Metro Finance Tower Tall",
-"Metsurance Building Tall",
-"Baseball Stadium",
-
-  # 20 indus
-"MetroMaker Towers Tall",
-"Industrial Center Tall",
-"Metro Industrial Tall",
-"Rocket Launch Site",
-
-  # 25
-"Nuclear Power Plant",
-
-  # 30 res
-"Organic Mansion",
-"Radiant Towers Medium",
-"Woodridge Center Medium",
-"Hoodville Towers Medium",
-
-  # 30 comm
-"Metro Trade Center Medium",
-"Metro Finance Tower Medium",
-"Metsurance Building Medium",
-
-  # 30 indus
-"MetroMaker Towers Medium",
-"Industrial Center Medium",
-"Metro Industrial Medium",
-"Solar Farm",
-"Crypto Mining Facility",
-"UnbelieVALTable",
-]
-
+def load_all():
+  (blocks, buildings, public, boosts) = load_data()
+  (buildings, public) = transform_buildings(buildings, public, boosts)
+  blocks = transform(blocks, buildings, public)
+  return (blocks, boosts, buildings, public)
 
 def load_data():
   blocks = read_json("data/all_blocks_slim.json")
@@ -159,6 +115,21 @@ def score(block):
       return trait['value']
   return False
   
+def buildings_by_rarity(all_blocks, buildings, public):
+  all_buildings = buildings.copy()
+  all_buildings.update(public)
+  
+  counts = defaultdict(int)
+  bcounts = defaultdict(int)
+  for block in all_blocks:
+    counted_for_block = False
+    for b in block['buildings']['all']:
+      counts[b] += 1
+      if not counted_for_block:
+        bcounts[b] += 1
+
+  sorted_buildings = sorted(all_buildings, key=lambda b: bcounts[b])
+  return (sorted_buildings, bcounts, counts)
 
 def fetch_all(limit=10000):
   all_blocks = []
@@ -259,20 +230,9 @@ def transform_block(block, buildings, public):
   return block
 
 
-#(blocks, buildings, public, boosts) = load_data()
-#(buildings, public) = transform_buildings(buildings, public, boosts)
-#blocks = transform(blocks, buildings, public)
+#(blocks, boosts, buildings, public) = load_all()
+#buildings_by_rarity(blocks, buildings, public)
 
 #print(find(blocks, 'Wildlife Waystation'))
-
-#print(find(blocks, "Metroverse Museum"))
-#printb(blocks[0])
-
-#printb(blocks[3])
 #compute_score(blocks[3], buildings, public)
-
-
-#bnum = sys.argv[1]
-#block = metadata(bnum)
-#print_block(block)
 
