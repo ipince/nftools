@@ -31,3 +31,11 @@ body {
 .body {
   margin: 10;
 }
+
+.row {
+  display: flex;
+}
+
+.column {
+  flex: 50%;
+}

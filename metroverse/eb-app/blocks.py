@@ -15,7 +15,13 @@ def index():
 def get_block(block_number):
   try:
     idx = int(block_number)
-    return content.with_body(render_block(BLOCKS[idx-1]) + boosts_str(), 'blocks')
+    body = f"""
+    <div class="row">
+      <div class="column">{render_block(BLOCKS[idx-1])}</div>
+      <div class="column">{render_boosts()}</div>
+    </div>
+    """
+    return content.with_body(body, 'blocks')
   except Exception as e:
     print("got exception...")
     print(e)
@@ -47,6 +53,7 @@ def render_block(block):
 
   bnum = block['name'][7:]
   return f"""
+<div>
 <h1 style="margin-bottom: 0">{block['name']}</h1>
 <small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href='https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{bnum}'>OpenSea</a>)
 </small>
@@ -60,7 +67,19 @@ def render_block(block):
   <ul><li>{'<li>'.join(strs[2])}</ul>
 <p>Public:
   <ul><li>{'<li>'.join(pubs)}</ul>
+</div>
 """
+
+def render_boosts():
+  s = """
+<h2 style="margin-bottom: 2">Neighborhoods Boosts</h2>
+<small>(reference <a href='https://docs.metroverse.com/overview/neighborhood-boost#list-of-neighborhood-boosts'>docs</a>)</small>
+<ul>
+"""
+  for b in BOOSTS:
+    s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
+  return s+"</ul>"
+
 
 def load_blocks():
   (blocks, buildings, public, boosts) = mv.load_data()
@@ -70,10 +89,4 @@ def load_blocks():
   return (blocks, boosts)
 
 (BLOCKS, BOOSTS) = load_blocks()
-
-def boosts_str():
-  s = "---<br><br>Neighborhoods Boosts reference (from <a href='https://docs.metroverse.com/overview/neighborhood-boost#list-of-neighborhood-boosts'>docs</a>):<br/><ul>"
-  for b in BOOSTS:
-    s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
-  return s+"</ul>"
 
