@@ -11,11 +11,11 @@ Welcome to the block explorer. This is a simple web service to view Metaverse bl
 
 hood_instructions = """
 <h1>Hood Simulator</h1>
-The Hood Simulator lets you check which neighborhoods boosts you would get if you were to stake a set of blocks. Try it out with an example: <a href="/hood/1,2,3">1,2,3</a>.
+The Hood Simulator lets you check which neighborhood boosts you would get if you were to stake a set of blocks. Try it out with an example: <a href="/hood/1,2,3">1,2,3</a>.
 """
 
 hood_warning = """
-<em>WARNING:</em> the neighborhood boosts feature is not released yet, and we don't yet know whether these boosts are stackable or not. I think it makes more sense to not make them stackable, so this simulator only tells you whether you get a particular boost or not, and not _how many_ of that boost you get. This is just my opinion on how boosts will end up working and I may be wrong.
+<div style="width: 800"><small><em>WARNING:</em> the neighborhood boosts feature is not released yet, and we don't yet know whether these boosts are stackable or not. I think it makes more sense to not make them stackable, so this simulator only tells you whether you get a particular boost or not, and not how many of that boost you get.</small></div>
 """
 
 def index():
@@ -53,8 +53,8 @@ def hood(blocks=None):
     names = [b['name'] for b in blocks]
     body = f"""
     <h1>Hood Simulator</h1>
-    <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}.
-    <p>Your total hood boost is <b>{tboost}%</b>.
+    <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}. Your total hood boost is <span style="font-size: 18"><b>{tboost}%</b></span>.
+    <p>{hood_warning}
     <div>{render_boosts(blocks)}</div>
     """
     for b in blocks:
@@ -62,7 +62,7 @@ def hood(blocks=None):
     return content.with_body(body, 'hoods')
   except Exception as e:
     traceback.print_exc()
-    return content.with_body("Failed to understand input. Please use comma-sepaarted list of block numbers, like this: <code><a href='/hood/1,2,3'>1,2,3</a></code>", 'hoods')
+    return content.with_body("Failed to understand input. Please use comma-separated list of block numbers, like this: <code><a href='/hood/1,2,3'>1,2,3</a></code>", 'hoods')
 
 
 def render_block(block):
