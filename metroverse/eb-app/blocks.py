@@ -59,7 +59,7 @@ def hood(blocks=None):
     <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}. Your total hood boost is <span style="font-size: 18"><b>{tboost}%</b></span>.<br/>
     This hood would produce <b><span style="font-size: 16">{score}<span></b> MET per day (now), and <b><span style="font-size: 16">{boosted_score}</span></b> MET per day after boosting is released.
     <p>{hood_warning}
-    <div>{render_boosts(blocks)}</div>
+    <div>{render_boosts(blocks, highlight=True)}</div>
     """
     for b in blocks:
       body += f"<div class='row'>{render_block(b)}</div>"
@@ -151,7 +151,8 @@ def render_boosts(blocks=None, highlight=False):
       if len(blocks_with_b) > 0:
         s += f"""<td style='background: darkseagreen'>{b}<br/>"""
         for block in blocks_with_b:
-          s += f""" <a href="#{block['num']}">#{block['num']}</a>"""
+          if highlight:
+            s += f""" <a href="#{block['num']}">#{block['num']}</a>"""
         s += "</td>"
       else:
         s += f"<td>{b}</td>"
