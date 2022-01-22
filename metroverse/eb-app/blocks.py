@@ -49,11 +49,15 @@ def hood(blocks=None):
     tboost = 0
     for boost in gotten:
       tboost += boost['pct']
+
+    score = sum(map(lambda b: b['scores']['Score: Total'], blocks))
+    boosted_score = round(score * (1+1.0*tboost/100), 2)
     
     names = [b['name'] for b in blocks]
     body = f"""
     <h1>Hood Simulator</h1>
-    <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}. Your total hood boost is <span style="font-size: 18"><b>{tboost}%</b></span>.
+    <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}. Your total hood boost is <span style="font-size: 18"><b>{tboost}%</b></span>.<br/>
+    This hood would produce <b><span style="font-size: 16">{score}<span></b> MET per day (now), and <b><span style="font-size: 16">{boosted_score}</span></b> MET per day after boosting is released.
     <p>{hood_warning}
     <div>{render_boosts(blocks)}</div>
     """
@@ -109,7 +113,7 @@ def render_block(block):
   bnum = block['num']
   return f"""
 <div>
-<h1 style="margin-bottom: 0">{block['name']}</h1>
+<h1 style="margin-bottom: 0"><a id="{block['num']}">{block['name']}</a></h1>
 <small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href='https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{bnum}'>OpenSea</a>)
 </small>
 
@@ -125,7 +129,7 @@ def render_block(block):
 </div>
 """
 
-def render_boosts(blocks=None):
+def render_boosts(blocks=None, highlight=False):
   gotten = list(map(lambda x: x['name'], mv.total_boost(blocks, BOOSTS)))
 
   names = set()
@@ -142,8 +146,13 @@ def render_boosts(blocks=None):
   for boost in BOOSTS:
     s += f"<tr><td>{boost['name']}</td>"
     for b in boost['buildings']:
-      if b in names:
-        s += f"<td style='background: darkseagreen'>{b}</td>"
+      # which blocks have building b?
+      blocks_with_b = [block for block in blocks if b in block['buildings']['all']]
+      if len(blocks_with_b) > 0:
+        s += f"""<td style='background: darkseagreen'>{b}<br/>"""
+        for block in blocks_with_b:
+          s += f""" <a href="#{block['num']}">#{block['num']}</a>"""
+        s += "</td>"
       else:
         s += f"<td>{b}</td>"
     if boost['name'] in gotten:
