@@ -1,13 +1,22 @@
 import content
 import metroverse as mv
+import traceback
 
 instructions = '''
 <h1>Block Explorer</h1>
 Welcome to the block explorer. This is a simple web service to view Metaverse block information.<br />
 
 <p>Just append <code>b/</code> and a block number to the URL (for example: <code><a href="/b/1">/b/1</a></code>) to view a block's info at a glance.
-
 '''
+
+hood_instructions = """
+<h1>Hood Simulator</h1>
+The Hood Simulator lets you check which neighborhoods boosts you would get if you were to stake a set of blocks. Try it out with an example: <a href="/hood/1,2,3">1,2,3</a>.
+"""
+
+hood_warning = """
+<em>WARNING:</em> the neighborhood boosts feature is not released yet, and we don't yet know whether these boosts are stackable or not. I think it makes more sense to not make them stackable, so this simulator only tells you whether you get a particular boost or not, and not _how many_ of that boost you get. This is just my opinion on how boosts will end up working and I may be wrong.
+"""
 
 def index():
   return content.with_body(instructions, 'blocks')
@@ -19,15 +28,41 @@ def get_block(block_number):
     body = f"""
     <div class="row">
       <div class="column">{render_block(block)}</div>
-      <div class="column">{render_boosts(block)}</div>
+      <div class="column">{render_boosts([block])}</div>
     </div>
     """
     return content.with_body(body, 'blocks')
   except Exception as e:
-    print("got exception...")
-    print(e)
-    return "Please enter a block number between 1 and 10000"
+    traceback.print_exc()
+    return content.with_body("Please enter a block number between 1 and 10000", 'blocks')
 
+def hood(blocks=None):
+  if blocks is None or blocks == "":
+    return content.with_body(hood_instructions, 'hoods')
+  try:
+    indeces = list(map(lambda s: int(s.strip()), blocks.split(",")))
+    if len(indeces) > 20:
+      return content.with_body("Please limit your input to 20 blocks", 'hoods')
+    blocks = list(filter(lambda b: b['num'] in indeces, BLOCKS))
+
+    gotten = mv.total_boost(blocks, BOOSTS)
+    tboost = 0
+    for boost in gotten:
+      tboost += boost['pct']
+    
+    names = [b['name'] for b in blocks]
+    body = f"""
+    <h1>Hood Simulator</h1>
+    <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}.
+    <p>Your total hood boost is <b>{tboost}%</b>.
+    <div>{render_boosts(blocks)}</div>
+    """
+    for b in blocks:
+      body += f"<div class='row'>{render_block(b)}</div>"
+    return content.with_body(body, 'hoods')
+  except Exception as e:
+    traceback.print_exc()
+    return content.with_body("Failed to understand input. Please use comma-sepaarted list of block numbers, like this: <code><a href='/hood/1,2,3'>1,2,3</a></code>", 'hoods')
 
 
 def render_block(block):
@@ -52,7 +87,7 @@ def render_block(block):
       s += f" <b>[{pub['boost_name']} - {pub['pct']}%]</b>"
     pubs.append(s)
 
-  bnum = block['name'][7:]
+  bnum = block['num']
   return f"""
 <div>
 <h1 style="margin-bottom: 0">{block['name']}</h1>
@@ -71,8 +106,13 @@ def render_block(block):
 </div>
 """
 
-def render_boosts(block):
-  names = block['buildings']['all'].keys()
+def render_boosts(blocks=None):
+  gotten = list(map(lambda x: x['name'], mv.total_boost(blocks, BOOSTS)))
+
+  names = set()
+  if blocks is not None:
+    for b in blocks:
+      names.update(b['buildings']['all'].keys())
   s = """
 <h2 style="margin-bottom: 2">Neighborhoods Boosts</h2>
 <small>(reference <a href='https://docs.metroverse.com/overview/neighborhood-boost#list-of-neighborhood-boosts'>docs</a>)</small>
@@ -87,7 +127,10 @@ def render_boosts(block):
         s += f"<td style='background: darkseagreen'>{b}</td>"
       else:
         s += f"<td>{b}</td>"
-    s += f"<td>{boost['pct']}%</td>"
+    if boost['name'] in gotten:
+      s += f"<td style='background: darkseagreen'>{boost['pct']}%</td>"
+    else:
+      s += f"<td>{boost['pct']}%</td>"
     s += "</tr>"
 #    s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
   return s+"</table>"

@@ -190,11 +190,19 @@ def compute_score(block, bmap, pmap):
 
   print(scores)
 
-#blocks = fetch_all(limit=10000)
-#alljson = json.dumps(blocks, indent=2)
-#print(alljson)
 
-#blocks = read_json("data/all_blocks_slim.json")
+def total_boost(blocks, boosts):
+  names = set()
+  if blocks is not None:
+    for b in blocks:
+      names.update(b['buildings']['all'].keys())
+
+  gotten = []
+  for boost in boosts:
+    if set(boost['buildings']).issubset(names):
+      gotten.append(boost)
+  return gotten
+
 
 def transform_buildings(buildings, public, boosts):
   bmap = {}
@@ -246,12 +254,16 @@ def transform_block(block, buildings, public):
 
   block['scores'] = scores
   block['buildings'] = bldgs
+  block['num'] = int(block['name'][7:])
 
   return block
+
 
 #(blocks, buildings, public, boosts) = load_data()
 #(buildings, public) = transform_buildings(buildings, public, boosts)
 #blocks = transform(blocks, buildings, public)
+
+#print(find(blocks, 'Wildlife Waystation'))
 
 #print(find(blocks, "Metroverse Museum"))
 #printb(blocks[0])

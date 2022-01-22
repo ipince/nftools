@@ -11,6 +11,7 @@ def header(page):
   return title + f'''
 <div class="topnav">
   <a {'class="active"' if page == 'blocks' else ''} href="/">Blocks</a>
+  <a {'class="active"' if page == 'hoods' else ''} href="/hood">Hoods</a>
   <a {'class="active"' if page == 'faq' else ''} href="/faq">FAQ</a>
 </div>
 <div class="body">
