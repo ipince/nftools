@@ -163,26 +163,6 @@ def compute_score(block, bmap, pmap):
   print(scores)
 
 
-# Return the boosts that these blocks qualify for.
-def total_boost(blocks, boosts):
-  names = set()
-  if blocks is not None:
-    for b in blocks:
-      names.update(b['buildings']['all'].keys())
-
-  gotten = []
-  for boost in boosts:
-    if set(boost['buildings']).issubset(names):
-      gotten.append(boost)
-  return gotten
-
-def boosted_score(blocks, boosts):
-  gotten = total_boost(blocks, boosts)
-  tboost = sum(map(lambda b: b['pct'], gotten))
-  score = sum(map(lambda b: b['scores']['total'], blocks))
-  boosted_score = round(score * (1+1.0*tboost/100), 2)
-  return boosted_score
-
 def transform_buildings(buildings, public, boosts):
   bmap = {}
   for b in buildings:
@@ -236,7 +216,9 @@ def transform_block(block, buildings, public, boosts):
   block['num'] = int(block['name'][7:])
   block['buildings'] = bldgs
   block['scores'] = scores
-  block['scores']['boosted'] = boosted_score([block], boosts)
+  (bscore, tboost) = boosted_score([block], boosts)
+  block['scores']['boosted'] = bscore
+  block['scores']['pct'] = tboost
 
   return block
 
@@ -252,6 +234,35 @@ def rank_blocks(blocks, boosts):
   sorted_blocks = sorted(blocks, key=lambda b: b['scores']['boosted'], reverse=True)
   for i, b in enumerate(sorted_blocks):
     block_dict[b['num']]['rank'] = i+1
+
+# Return the boosts that these blocks qualify for.
+def total_boost(blocks, boosts):
+  names = set()
+  if blocks is not None:
+    for b in blocks:
+      names.update(b['buildings']['all'].keys())
+
+  gotten = []
+  for boost in boosts:
+    if set(boost['buildings']).issubset(names):
+      gotten.append(boost)
+  return gotten
+
+# Return the total boosted score of these blocks.
+def boosted_score(blocks, boosts):
+  gotten = total_boost(blocks, boosts)
+  tboost = sum(map(lambda b: b['pct'], gotten))
+  score = sum(map(lambda b: b['scores']['total'], blocks))
+  boosted_score = round(score * (1+1.0*tboost/100), 2)
+  return (boosted_score, tboost)
+
+def best_pairs(blocks, boosts):
+  best = defaultdict(int)
+  # brute force each pair
+  for b1 in blocks:
+    for b2 in blocks:
+      (bscore, tboost) = boosted_score([b1, b2], boosts)
+  return None
 
 
 #(blocks, boosts, buildings, public) = load_all()

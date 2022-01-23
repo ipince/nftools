@@ -96,9 +96,9 @@ def ranks():
   <table>
   """
   sorted_blocks = sorted(BLOCKS, key=lambda b: b['rank'])
-  body += "<tr><th>Block Name</th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
+  body += "<tr><th>Block Name</th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Boost (pct)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
   for b in sorted_blocks:
-    body += f"<tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td><td>{b['scores']['total']}</td><td>{b['raw_rank']}</td><td>{b['scores']['boosted']}</td><td>{b['rank']}</td></tr>"
+    body += f"<tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td><td>{b['scores']['total']}</td><td>{b['raw_rank']}</td><td>{b['scores']['pct']}%</td><td>{b['scores']['boosted']}</td><td>{b['rank']}</td></tr>"
 
   body += "</table>"
   return content.with_body(body, 'ranks')
