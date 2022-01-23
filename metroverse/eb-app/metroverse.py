@@ -7,7 +7,8 @@ from collections import defaultdict
 def load_all():
   (blocks, buildings, public, boosts) = load_data()
   (buildings, public) = transform_buildings(buildings, public, boosts)
-  blocks = transform(blocks, buildings, public)
+  blocks = transform(blocks, buildings, public, boosts)
+  rank_blocks(blocks, boosts)
   return (blocks, boosts, buildings, public)
 
 def load_data():
@@ -162,6 +163,7 @@ def compute_score(block, bmap, pmap):
   print(scores)
 
 
+# Return the boosts that these blocks qualify for.
 def total_boost(blocks, boosts):
   names = set()
   if blocks is not None:
@@ -174,6 +176,12 @@ def total_boost(blocks, boosts):
       gotten.append(boost)
   return gotten
 
+def boosted_score(blocks, boosts):
+  gotten = total_boost(blocks, boosts)
+  tboost = sum(map(lambda b: b['pct'], gotten))
+  score = sum(map(lambda b: b['scores']['total'], blocks))
+  boosted_score = round(score * (1+1.0*tboost/100), 2)
+  return boosted_score
 
 def transform_buildings(buildings, public, boosts):
   bmap = {}
@@ -195,13 +203,13 @@ def transform_buildings(buildings, public, boosts):
 
   return (bmap, pmap)
 
-def transform(blocks, buildings, public):
+def transform(blocks, buildings, public, boosts):
   transformed = []
   for b in blocks:
-    transformed.append(transform_block(b, buildings, public))
+    transformed.append(transform_block(b, buildings, public, boosts))
   return transformed
 
-def transform_block(block, buildings, public):
+def transform_block(block, buildings, public, boosts):
   # TODO: handle repeated!
   scores = {}
   bldgs = defaultdict(dict)
@@ -209,7 +217,9 @@ def transform_block(block, buildings, public):
     ttype = trait['trait_type']
     value = trait['value']
     if "Score" in ttype:
-      scores[ttype] = value
+      scores[ttype] = value # deprecate others
+      if ttype == "Score: Total":
+        scores['total'] = value
     elif ttype == "Buildings: Residential":
       bldgs['res'][value] = buildings[value]
       bldgs['all'][value] = buildings[value]
@@ -223,14 +233,29 @@ def transform_block(block, buildings, public):
       bldgs['pub'][value] = public[value]
       bldgs['all'][value] = public[value]
 
-  block['scores'] = scores
-  block['buildings'] = bldgs
   block['num'] = int(block['name'][7:])
+  block['buildings'] = bldgs
+  block['scores'] = scores
+  block['scores']['boosted'] = boosted_score([block], boosts)
 
   return block
 
+def rank_blocks(blocks, boosts):
+  block_dict = {}
+  for b in blocks:
+    block_dict[b['num']] = b
+
+  sorted_blocks = sorted(blocks, key=lambda b: b['scores']['total'], reverse=True)
+  for i, b in enumerate(sorted_blocks):
+    block_dict[b['num']]['raw_rank'] = i+1
+
+  sorted_blocks = sorted(blocks, key=lambda b: b['scores']['boosted'], reverse=True)
+  for i, b in enumerate(sorted_blocks):
+    block_dict[b['num']]['rank'] = i+1
+
 
 #(blocks, boosts, buildings, public) = load_all()
+#rank_blocks(blocks)
 #buildings_by_rarity(blocks, buildings, public)
 
 #print(find(blocks, 'Wildlife Waystation'))

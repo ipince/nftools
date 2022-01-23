@@ -50,8 +50,8 @@ def hood(blocks=None):
     for boost in gotten:
       tboost += boost['pct']
 
-    score = sum(map(lambda b: b['scores']['Score: Total'], blocks))
-    boosted_score = round(score * (1+1.0*tboost/100), 2)
+    score = sum(map(lambda b: b['scores']['total'], blocks))
+    boosted_score = round(score * (1+1.0*tboost/100), 2) # keep in sync w mv.boosted_score()
     
     names = [b['name'] for b in blocks]
     body = f"""
@@ -87,6 +87,22 @@ def buildings():
 
   return content.with_body(body, 'buildings')
 
+def ranks():
+  body = """<h1>Block Ranks</h1>
+
+  <p>Note, these are calculated based on the MET-producing power, not on rarity. <br/>
+  Also, I chose to use the "boosted" rank as the rank because that will be the true MET-producing power of the block once boosts are actually implemented.
+  <p>
+  <table>
+  """
+  sorted_blocks = sorted(BLOCKS, key=lambda b: b['rank'])
+  body += "<tr><th>Block Name</th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
+  for b in sorted_blocks:
+    body += f"<tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td><td>{b['scores']['total']}</td><td>{b['raw_rank']}</td><td>{b['scores']['boosted']}</td><td>{b['rank']}</td></tr>"
+
+  body += "</table>"
+  return content.with_body(body, 'ranks')
+
 
 def render_block(block):
   strs = []
@@ -113,8 +129,8 @@ def render_block(block):
   bnum = block['num']
   return f"""
 <div>
-<h1 style="margin-bottom: 0"><a id="{block['num']}">{block['name']}</a></h1>
-<small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href='https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{bnum}'>OpenSea</a>)
+<h1 style="margin-bottom: 0"><a id="{block['num']}">{block['name']}</a> (<a href="/ranks">rank</a> {block['rank']}/10000)</h1>
+<small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href={opensea(block)}>OpenSea</a>)
 </small>
 
 <p>Total Score: <b>{block['scores']['Score: Total']}</b>
@@ -128,6 +144,9 @@ def render_block(block):
   <ul><li>{'<li>'.join(pubs)}</ul>
 </div>
 """
+
+def opensea(block):
+  return f"https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{block['num']}"
 
 def render_boosts(blocks=None, highlight=False):
   gotten = list(map(lambda x: x['name'], mv.total_boost(blocks, BOOSTS)))

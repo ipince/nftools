@@ -13,6 +13,7 @@ def header(page):
   <a {'class="active"' if page == 'blocks' else ''} href="/">Blocks</a>
   <a {'class="active"' if page == 'hoods' else ''} href="/hood">Hoods</a>
   <a {'class="active"' if page == 'buildings' else ''} href="/buildings">Buildings</a>
+  <a {'class="active"' if page == 'ranks' else ''} href="/ranks">Ranks</a>
   <a {'class="active"' if page == 'faq' else ''} href="/faq">FAQ</a>
 </div>
 <div class="body">
