@@ -41,8 +41,8 @@ def hood(blocks=None):
     return content.with_body(hood_instructions, 'hoods')
   try:
     indeces = list(map(lambda s: int(s.strip()), blocks.split(",")))
-    if len(indeces) > 20:
-      return content.with_body("Please limit your input to 20 blocks", 'hoods')
+    if len(indeces) > 50:
+      return content.with_body("Please limit your input to 50 blocks", 'hoods')
     blocks = list(filter(lambda b: b['num'] in indeces, BLOCKS))
 
     gotten = mv.total_boost(blocks, BOOSTS)
