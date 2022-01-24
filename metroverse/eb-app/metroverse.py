@@ -256,18 +256,30 @@ def boosted_score(blocks, boosts):
   boosted_score = round(score * (1+1.0*tboost/100), 2)
   return (boosted_score, tboost)
 
-def best_pairs(blocks, boosts):
-  best = defaultdict(int)
-  # brute force each pair
-  for b1 in blocks:
-    for b2 in blocks:
-      (bscore, tboost) = boosted_score([b1, b2], boosts)
-  return None
+def best_expansions(hood, blocks, boosts):
+  (current_score, current_boost) = boosted_score(hood, boosts)
+
+  # brute force: try adding every other block and calculate!
+  hood_nums = [b['num'] for b in hood]
+  hood_copy = hood.copy()
+  hood_copy.append(None) # optimization: pre-allocate and reuse array
+  options = []
+  for block in blocks:
+    if block['num'] in hood_nums:
+      continue
+    hood_copy[-1] = block
+    (new_score, new_boost) = boosted_score(hood_copy, boosts)
+    options.append({'score': new_score, 'boost': new_boost, 'block': block})
+
+  best_by_score = sorted(options, key=lambda o: (o['score'], o['boost']), reverse=True)
+  best_by_boost = sorted(options, key=lambda o: (o['boost'], o['score']), reverse=True)
+
+  return (best_by_score, best_by_boost)
 
 
 #(blocks, boosts, buildings, public) = load_all()
-#rank_blocks(blocks)
-#buildings_by_rarity(blocks, buildings, public)
+#(byscore, byboost) = best_expansion(blocks[0:2], blocks, boosts)
+#print(byscore[:2])
 
 #print(find(blocks, 'Wildlife Waystation'))
 #compute_score(blocks[3], buildings, public)

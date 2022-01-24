@@ -52,7 +52,11 @@ def hood(blocks=None):
 
     score = sum(map(lambda b: b['scores']['total'], blocks))
     boosted_score = round(score * (1+1.0*tboost/100), 2) # keep in sync w mv.boosted_score()
+
+    # Find best expansions:
+    (byscore, byboost) = mv.best_expansions(blocks, BLOCKS, BOOSTS)
     
+    # Boost table
     names = [b['name'] for b in blocks]
     body = f"""
     <h1>Hood Simulator</h1>
@@ -61,12 +65,67 @@ def hood(blocks=None):
     <p>{hood_warning}
     <div>{render_boosts(blocks, highlight=True)}</div>
     """
+
+    # Expansions
+    body += """
+    <h2>Expansions</h2>
+    This is an ordered list of which blocks will best expand your current hood. We consider two
+    ways to optimize: by score and by boost. If you only optimize by score, then the list will
+    most likely be topped by blocks that have a large total score. But there might be some great blocks
+    with a lower total score that may add a lot to your particular neighborhood by unlocking boosts.
+    <p>If you're only going to add one block, you probably
+    want to optimize by score. If you're going to add multiple blocks, then you might be better
+    off optimizing by boost.
+    <p>
+    <div class="row">
+    """
+    # By score
+    body += """
+    <div class="column"><h3>By Score (top 100)</h3>
+    <table>
+    <tr><th>Block</th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
+    """
+    for i in range(100):
+      delta = fmt_score(byscore[i]['score'] - boosted_score)
+      expand = f"/hood/{','.join(map(str, indeces + [byscore[i]['block']['num']]))}"
+      body += f"""
+      <tr><td><a href="/b/{byscore[i]['block']['num']}">{byscore[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
+      <td>{byscore[i]['boost']}%</td>
+      <td>{fmt_score(byscore[i]['score'])}</td>
+      <td>{delta}</td></tr>"""
+    body += """
+    </table></div>
+    """
+    # By boost
+    body += """
+    <div class="column"><h3>By Boost (top 100)</h3><table>
+    <tr><th>Block</th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
+    """
+    for i in range(100):
+      delta = fmt_score(byscore[i]['score'] - boosted_score)
+      expand = f"/hood/{','.join(map(str, indeces + [byboost[i]['block']['num']]))}"
+      body += f"""
+      <tr><td><a href="/b/{byboost[i]['block']['num']}">{byboost[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
+      <td>{byboost[i]['boost']}%</td>
+      <td>{fmt_score(byboost[i]['score'])}</td>
+      <td>{delta}</td></tr>"""
+
+    body += """
+    </table></div>
+    </div>
+    <p>
+    """
+
+    # Blocks
     for b in blocks:
       body += f"<div class='row'>{render_block(b)}</div>"
     return content.with_body(body, 'hoods')
   except Exception as e:
     traceback.print_exc()
     return content.with_body("Failed to understand input. Please use comma-separated list of block numbers, like this: <code><a href='/hood/1,2,3'>1,2,3</a></code>", 'hoods')
+
+def fmt_score(score):
+  return "{:.2f}".format(score)
 
 def buildings():
   body = """
