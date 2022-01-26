@@ -3,11 +3,14 @@ import json
 import sys
 import time
 from collections import defaultdict
+from datetime import datetime
+
+LAST_STAKE_UPDATE = datetime.fromisoformat('2022-01-25T19:59:54.191413')
 
 def load_all():
-  (blocks, buildings, public, boosts) = load_data()
+  (blocks, buildings, public, boosts, staked) = load_data()
   (buildings, public) = transform_buildings(buildings, public, boosts)
-  blocks = transform(blocks, buildings, public, boosts)
+  blocks = transform(blocks, buildings, public, boosts, staked)
   rank_blocks(blocks, boosts)
   return (blocks, boosts, buildings, public)
 
@@ -16,7 +19,13 @@ def load_data():
   buildings = read_json("data/buildings_non_public.json")
   public = read_json("data/buildings_public.json")
   boosts = read_json("data/boosts.json")
-  return (blocks, buildings, public, boosts)
+  staked = read_staked("data/staked.txt")
+  return (blocks, buildings, public, boosts, staked)
+
+def read_staked(path):
+  with open(path, 'r') as f:
+    staked = list(map(int, f.read().splitlines()))
+    return staked
 
 def read_json(path):
   with open(path, 'r') as f:
@@ -183,13 +192,13 @@ def transform_buildings(buildings, public, boosts):
 
   return (bmap, pmap)
 
-def transform(blocks, buildings, public, boosts):
+def transform(blocks, buildings, public, boosts, staked):
   transformed = []
   for b in blocks:
-    transformed.append(transform_block(b, buildings, public, boosts))
+    transformed.append(transform_block(b, buildings, public, boosts, staked))
   return transformed
 
-def transform_block(block, buildings, public, boosts):
+def transform_block(block, buildings, public, boosts, staked):
   # TODO: handle repeated!
   scores = {}
   bldgs = defaultdict(dict)
@@ -219,6 +228,7 @@ def transform_block(block, buildings, public, boosts):
   (bscore, tboost) = boosted_score([block], boosts)
   block['scores']['boosted'] = bscore
   block['scores']['pct'] = tboost
+  block['staked'] = block['num'] in staked
 
   return block
 
@@ -278,7 +288,7 @@ def best_expansions(hood, blocks, boosts):
 
 
 #(blocks, boosts, buildings, public) = load_all()
-#(byscore, byboost) = best_expansion(blocks[0:2], blocks, boosts)
+#(byscore, byboost) = best_expansions(blocks[0:2], blocks, boosts)
 #print(byscore[:2])
 
 #print(find(blocks, 'Wildlife Waystation'))

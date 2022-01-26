@@ -41,8 +41,8 @@ def hood(blocks=None):
     return content.with_body(hood_instructions, 'hoods')
   try:
     indeces = list(map(lambda s: int(s.strip()), blocks.split(",")))
-    if len(indeces) > 50:
-      return content.with_body("Please limit your input to 50 blocks", 'hoods')
+    if len(indeces) > 100:
+      return content.with_body("Please limit your input to 100 blocks", 'hoods')
     blocks = list(filter(lambda b: b['num'] in indeces, BLOCKS))
 
     gotten = mv.total_boost(blocks, BOOSTS)
@@ -80,16 +80,18 @@ def hood(blocks=None):
     <div class="row">
     """
     # By score
-    body += """
+    body += f"""
     <div class="column"><h3>By Score (top 100)</h3>
     <table>
-    <tr><th>Block</th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
+    <tr><th>Block</th><th>Staked?<br><small>as of {mv.LAST_STAKE_UPDATE}</small></th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
     """
     for i in range(100):
       delta = fmt_score(byscore[i]['score'] - boosted_score)
       expand = f"/hood/{','.join(map(str, indeces + [byscore[i]['block']['num']]))}"
+      staked = 'Yes' if byscore[i]['block']['staked'] else f"No (<a href={opensea(byscore[i]['block'])}>OpenSea</a>)"
       body += f"""
       <tr><td><a href="/b/{byscore[i]['block']['num']}">{byscore[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
+      <td>{staked}</td>
       <td>{byscore[i]['boost']}%</td>
       <td>{fmt_score(byscore[i]['score'])}</td>
       <td>{delta}</td></tr>"""
@@ -97,15 +99,17 @@ def hood(blocks=None):
     </table></div>
     """
     # By boost
-    body += """
+    body += f"""
     <div class="column"><h3>By Boost (top 100)</h3><table>
-    <tr><th>Block</th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
+    <tr><th>Block</th><th>Staked?<br><small>as of {mv.LAST_STAKE_UPDATE}</small></th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
     """
     for i in range(100):
       delta = fmt_score(byscore[i]['score'] - boosted_score)
       expand = f"/hood/{','.join(map(str, indeces + [byboost[i]['block']['num']]))}"
+      staked = 'Yes' if byboost[i]['block']['staked'] else f"No (<a href={opensea(byboost[i]['block'])}>OpenSea</a>)"
       body += f"""
       <tr><td><a href="/b/{byboost[i]['block']['num']}">{byboost[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
+      <td>{staked}</td>
       <td>{byboost[i]['boost']}%</td>
       <td>{fmt_score(byboost[i]['score'])}</td>
       <td>{delta}</td></tr>"""
@@ -155,9 +159,9 @@ def ranks():
   <table>
   """
   sorted_blocks = sorted(BLOCKS, key=lambda b: b['rank'])
-  body += "<tr><th>Block Name</th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Boost (pct)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
+  body += f"<tr><th>Block Name</th><th>Staked?<br><small>as of {mv.LAST_STAKE_UPDATE}</small></th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Boost (pct)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
   for b in sorted_blocks:
-    body += f"<tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td><td>{b['scores']['total']}</td><td>{b['raw_rank']}</td><td>{b['scores']['pct']}%</td><td>{b['scores']['boosted']}</td><td>{b['rank']}</td></tr>"
+    body += f"<tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td><td>{'Yes' if b['staked'] else 'No'}</td><td>{b['scores']['total']}</td><td>{b['raw_rank']}</td><td>{b['scores']['pct']}%</td><td>{b['scores']['boosted']}</td><td>{b['rank']}</td></tr>"
 
   body += "</table>"
   return content.with_body(body, 'ranks')
@@ -189,7 +193,7 @@ def render_block(block):
   return f"""
 <div>
 <h1 style="margin-bottom: 0"><a id="{block['num']}">{block['name']}</a> (<a href="/ranks">rank</a> {block['rank']}/10000)</h1>
-<small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href={opensea(block)}>OpenSea</a>)
+<small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href={opensea(block)}>OpenSea</a>; this block is {"" if block['staked'] else "<b>not</b>"} staked as of {mv.LAST_STAKE_UPDATE})
 </small>
 
 <p>Total Score: <b>{block['scores']['Score: Total']}</b>
