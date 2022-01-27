@@ -2,10 +2,13 @@ import requests
 import json
 import sys
 import time
+
 from collections import defaultdict
 from datetime import datetime
 
-LAST_STAKE_UPDATE = datetime.fromisoformat('2022-01-25T19:59:54.191413')
+# https://etherscan.io/token/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f#readContract
+# vault: 0xaB93F992D9737Bd740113643e79fe9F8B6B34696
+LAST_STAKE_UPDATE = datetime.fromisoformat('2022-01-27T12:30:14.859197')
 
 def load_all():
   (blocks, buildings, public, boosts, staked) = load_data()
