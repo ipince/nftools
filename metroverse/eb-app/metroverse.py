@@ -8,7 +8,7 @@ from datetime import datetime
 
 # https://etherscan.io/token/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f#readContract
 # vault: 0xaB93F992D9737Bd740113643e79fe9F8B6B34696
-LAST_STAKE_UPDATE = datetime.fromisoformat('2022-01-27T12:30:14.859197')
+LAST_STAKE_UPDATE = datetime.fromisoformat('2022-01-28T13:14:23.119260')
 
 def load_all():
   (blocks, buildings, public, boosts, staked) = load_data()
