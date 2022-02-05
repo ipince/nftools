@@ -15,7 +15,10 @@ The Hood Simulator lets you check which neighborhood boosts you would get if you
 """
 
 hood_warning = """
-<div style="width: 800"><small><em>WARNING:</em> the neighborhood boosts feature is not released yet, and we don't yet know whether these boosts are stackable or not. I think it makes more sense to not make them stackable, so this simulator only tells you whether you get a particular boost or not, and not how many of that boost you get.</small></div>
+<div style="width: 800"><small><em>WARNING:</em> the neighborhood boosts feature is not released yet. The boosts will likely be stackable (with a decaying factor of 0.5), but this simulator DOES NOT YET calculate stacked boosts, only single boosts. I'll implement stacked boosts once we actually know for sure how the calculation will be made.
+<p>
+If you plan to optimize your neighborhoods before this feature is released, please be aware that <a href="https://docs.metroverse.com/overview/neighborhood-boost#feature-release">large hoods will have limitations on how boost % is calculated</a> to ensure they do not receive a disproportionate share of MET earnings.
+</small></div>
 """
 
 def index():
@@ -45,11 +48,8 @@ def hood(blocks=None):
       return content.with_body("Please limit your input to 100 blocks", 'hoods')
     blocks = list(filter(lambda b: b['num'] in indeces, BLOCKS))
 
-    gotten = mv.total_boost(blocks, BOOSTS)
-    tboost = 0
-    for boost in gotten:
-      tboost += boost['pct']
-
+    (bboosts, pboosts) = mv.total_boost(blocks, BOOSTS)
+    tboost = sum([b['pct'] for b in bboosts]) + sum([b['pct'] for b in pboosts])
     score = sum(map(lambda b: b['scores']['total'], blocks))
     boosted_score = round(score * (1+1.0*tboost/100), 2) # keep in sync w mv.boosted_score()
 
@@ -64,6 +64,7 @@ def hood(blocks=None):
     This hood would produce <b><span style="font-size: 16">{score}<span></b> MET per day (now), and <b><span style="font-size: 16">{boosted_score}</span></b> MET per day after boosting is released.
     <p>{hood_warning}
     <div>{render_boosts(blocks, highlight=True)}</div>
+    <div>{render_pathway_boosts(blocks)}</div>
     """
 
     # Expansions
@@ -83,7 +84,7 @@ def hood(blocks=None):
     body += f"""
     <div class="column"><h3>By Score (top 100)</h3>
     <table>
-    <tr><th>Block</th><th>Staked?<br><small>as of {mv.LAST_STAKE_UPDATE}</small></th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
+    <tr><th>Block</th><th>Staked?<br><small>as of {mv.last_stake_update()}</small></th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
     """
     for i in range(100):
       delta = fmt_score(byscore[i]['score'] - boosted_score)
@@ -101,7 +102,7 @@ def hood(blocks=None):
     # By boost
     body += f"""
     <div class="column"><h3>By Boost (top 100)</h3><table>
-    <tr><th>Block</th><th>Staked?<br><small>as of {mv.LAST_STAKE_UPDATE}</small></th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
+    <tr><th>Block</th><th>Staked?<br><small>as of {mv.last_stake_update()}</small></th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
     """
     for i in range(100):
       delta = fmt_score(byscore[i]['score'] - boosted_score)
@@ -159,7 +160,7 @@ def ranks():
   <table>
   """
   sorted_blocks = sorted(BLOCKS, key=lambda b: b['rank'])
-  body += f"<tr><th>Block Name</th><th>Staked?<br><small>as of {mv.LAST_STAKE_UPDATE}</small></th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Boost (pct)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
+  body += f"<tr><th>Block Name</th><th>Staked?<br><small>as of {mv.last_stake_update()}</small></th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Boost (pct)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
   for b in sorted_blocks:
     body += f"<tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td><td>{'Yes' if b['staked'] else 'No'}</td><td>{b['scores']['total']}</td><td>{b['raw_rank']}</td><td>{b['scores']['pct']}%</td><td>{b['scores']['boosted']}</td><td>{b['rank']}</td></tr>"
 
@@ -190,13 +191,15 @@ def render_block(block):
     pubs.append(s)
 
   bnum = block['num']
+  pathway_emoji = "🚆" if block['pathway'] == ['rail'] else ("🚢" if block['pathway'] == 'river' else "")
   return f"""
 <div>
 <h1 style="margin-bottom: 0"><a id="{block['num']}">{block['name']}</a> (<a href="/ranks">rank</a> {block['rank']}/10000)</h1>
-<small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href={opensea(block)}>OpenSea</a>; this block is {"" if block['staked'] else "<b>not</b>"} staked as of {mv.LAST_STAKE_UPDATE})
+<small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href={opensea(block)}>OpenSea</a>; this block is {"" if block['staked'] else "<b>not</b>"} staked as of {mv.last_stake_update()})
 </small>
 
 <p>Total Score: <b>{block['scores']['Score: Total']}</b>
+<p>Pathway Boost (2 of same kind): {block['pathway']} {pathway_emoji}
 <p>Residential (Score {block['scores']['Score: Residential']}):
   <ul><li>{'<li>'.join(strs[0])}</ul>
 <p>Commercial (Score {block['scores']['Score: Commercial']}):
@@ -212,14 +215,15 @@ def opensea(block):
   return f"https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{block['num']}"
 
 def render_boosts(blocks=None, highlight=False):
-  gotten = list(map(lambda x: x['name'], mv.total_boost(blocks, BOOSTS)))
+  (active_bboosts, active_pboosts) = mv.total_boost(blocks, BOOSTS)
+  bboosts_names = [x['name'] for x in active_bboosts]
 
   names = set()
   if blocks is not None:
     for b in blocks:
       names.update(b['buildings']['all'].keys())
   s = """
-<h2 style="margin-bottom: 2">Neighborhoods Boosts</h2>
+<h2 style="margin-bottom: 2">Building Boosts</h2>
 <small>(reference <a href='https://docs.metroverse.com/overview/neighborhood-boost#list-of-neighborhood-boosts'>docs</a>)</small>
 <p>
 <table>
@@ -238,7 +242,7 @@ def render_boosts(blocks=None, highlight=False):
         s += "</td>"
       else:
         s += f"<td>{b}</td>"
-    if boost['name'] in gotten:
+    if boost['name'] in bboosts_names:
       s += f"<td style='background: darkseagreen'>{boost['pct']}%</td>"
     else:
       s += f"<td>{boost['pct']}%</td>"
@@ -246,6 +250,35 @@ def render_boosts(blocks=None, highlight=False):
 #    s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
   return s+"</table>"
 
+def render_pathway_boosts(blocks):
+  (_, pboosts) = mv.total_boost(blocks, BOOSTS)
+  pboosts_names = [x['name'] for x in pboosts]
+  s = """
+<h2 style="margin-bottom: 2">Pathway Boosts</h2>
+<small>(reference <a href='https://docs.metroverse.com/overview/pathway-boost#pathway-boost'>docs</a>)</small>
+<p><table>
+<tr><th>Name</th><th>Blocks with 2 of same kind</th><th>Boost %</th></tr>
+"""
+  for pboost in mv.PATHWAY_BOOSTS:
+    some = False
+    s += f"<tr><td>{pboost['name']}</td>"
+    if pboost['name'] in pboosts_names:
+      s += "<td style='background: darkseagreen'>"
+    else:
+      s += "<td>"
+    for block in blocks:
+      if block['pathway'] == pboost['pathway']:
+        some = True
+        s += f"""<a href="#{block['num']}">#{block['num']}</a>  """
+    if not some:
+      s += "None :("
+    s += "</td>"
+    if pboost['name'] in pboosts_names:
+      s += f"<td style='background: darkseagreen'>{pboost['pct']}%</td></tr>"
+    else:
+      s += f"<td>{pboost['pct']}%</td></tr>"
+  s += "</table>"
+  return s
 
 (BLOCKS, BOOSTS, BUILDINGS, PUBLIC) = mv.load_all()
 

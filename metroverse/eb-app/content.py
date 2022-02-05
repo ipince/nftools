@@ -26,7 +26,7 @@ footer = '''
 '''
 
 FAQ = '''
-<h1> FAQ</h2>
+<h1>FAQ</h1>
 <ul>
 
 <li>What is Metroblocks.io?
@@ -49,26 +49,38 @@ FAQ = '''
   <li>Your "hood" is the set of all your staked blocks. If your hood has a particular combination of buildings, it may unlock <a href="https://docs.metroverse.com/overview/neighborhood-boost">neighborhood boosts</a> which increase your MET production.
 </ul></ul>
 
-<li>What features do you have in mind to develop?
-<ul><li>Here are my ideas so far:
-  <ul><li>Create a ranking for the best blocks, as measured by their MET production capacity. This answers the question: if you wanted to maximize MET and could only afford _one_ block, which one is the most efficient? Note that this is not only determined by the block's score, because we also need to consider neighborhood boosts (a single block may contain all the buildings needed for a neighborhood boost).
-  <li>Expanding the above, if you could have _two_ blocks, which two blocks are best? Which blocks synergize with which?
-  <li>If you have one block, which other block should you get?
-  <li>Hood simulator: if you had a bunch of blocks, what would your total score (with neighborhood boost) be?
-  <li>Compute building and block rarity.
-</ul><li>If you have other ideas, please reach out!
-</ul>
-
 <li>Why is the site so fugly?
 <ul><li>I'm sorry, I don't have much web experience. If you can help me with the design, I would greatly appreciate it!
 </ul>
 
 <li>How do I contact you?
 <ul><li>If you have any feedback, questions, or ideas, please contact me on the Metroverse Discord at GrainOfSalt#1158
-<li>If you're feeling generous, drop me a tip: <code>0x130137F563e12bF4592B4280b488A270C96Cb2A3</code>
+<li>If you're feeling generous, drop me a tip (either ETH or MET ;)): <code>0x130137F563e12bF4592B4280b488A270C96Cb2A3</code>
+</ul>
 </ul>
 
+<h1>Features</h1>
+
+<ul><li>DONE
+  <ul><li>(see <a href="/ranks">Ranks</a>) Create a ranking for the best blocks, as measured by their MET production capacity. This answers the question: if you wanted to maximize MET and could only afford one block, which one is the most efficient? Note that this is not only determined by the block's score, because we also need to consider neighborhood boosts (a single block may contain all the buildings needed for a neighborhood boost).
+  <li>(use the <a href="/hood">Hood Simulator</a> with 1 block) Expanding the above, if you could have _two_ blocks, which two blocks are best? Which blocks synergize with which?
+  <li>(same as above) If you have one block, which other block should you get?
+  <li>(see <a href="/hood">Hood Simulator</a>!) If you had a bunch of blocks, what would your total score (with neighborhood boost) be? What's the best way to expand that hood?
+  <li>(see <a href="/buildings">Buildings</a>) Compute building and block rarity. (note: I didn't implement block rarity because it's too subjective).
 </ul>
+<li>Upcoming
+<ul>
+<li>Add Pathway Boosts to Hood Simulator
+<li>Add Pathway Boost page to see which blocks have which pathways
+<li>Improve hood expansion calculation to prioritize hoods that add pathway boosts
+<li>Add more visible tip jar
+<li>Implement stackable boosts (with 0.5 decay), as mentioned in AMA.
+<li>Show whether a block is listed on OpenSea, and its price. I'm waiting on an OpenSea API key for this.
+<li>Show whether a block is staked or not (automatic). Right now I update this manually.
+<li>Win-Wins: Given two hoods, does there exist a block trade that results in <b>both</b> hoods being better off?
+<li>Trading Platform: link up your wallet to the site. If you want a specific block, you can message the owner of that block. When the owner links up their wallet, they'll be able to see your message and message you back!
+</ul>
+
 '''
 
 def with_body(body, page):

@@ -2,6 +2,7 @@ import requests
 import json
 import sys
 import time
+import os
 
 from collections import defaultdict
 from datetime import datetime
@@ -9,6 +10,23 @@ from datetime import datetime
 # https://etherscan.io/token/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f#readContract
 # vault: 0xaB93F992D9737Bd740113643e79fe9F8B6B34696
 LAST_STAKE_UPDATE = datetime.fromisoformat('2022-01-28T13:14:23.119260')
+
+PATHWAY_BOOSTS = [
+  {
+    "name": "Railway Pathway",
+    "pathway": "rail",
+    "pct": 4,
+  },
+  {
+    "name": "River Pathway",
+    "pathway": "river",
+    "pct": 8,
+  },
+]
+
+def last_stake_update():
+  return datetime.fromtimestamp(os.path.getmtime("data/staked.txt")).strftime("%Y-%m-%d %H:%M:%S UTC")
+
 
 def load_all():
   (blocks, buildings, public, boosts, staked) = load_data()
@@ -225,6 +243,14 @@ def transform_block(block, buildings, public, boosts, staked):
       bldgs['pub'][value] = public[value]
       bldgs['all'][value] = public[value]
 
+  pathwayx = block['entities'][0]['entity_type']['name']
+  if pathwayx == 'river-x-river':
+    block['pathway'] = 'river'
+  elif pathwayx == 'rail-x-rail':
+    block['pathway'] = 'rail'
+  else:
+    block['pathway'] = None
+
   block['num'] = int(block['name'][7:])
   block['buildings'] = bldgs
   block['scores'] = scores
@@ -248,23 +274,35 @@ def rank_blocks(blocks, boosts):
   for i, b in enumerate(sorted_blocks):
     block_dict[b['num']]['rank'] = i+1
 
-# Return the boosts that these blocks qualify for.
+# Return the boosts that these blocks qualify for (TODO: and their counts)
 def total_boost(blocks, boosts):
   names = set()
-  if blocks is not None:
+  if blocks is not None: # when is it None?
     for b in blocks:
       names.update(b['buildings']['all'].keys())
 
-  gotten = []
+  active_bboosts = []
   for boost in boosts:
     if set(boost['buildings']).issubset(names):
-      gotten.append(boost)
-  return gotten
+      active_bboosts.append(boost)
+
+  active_pboosts = []
+  for pboost in PATHWAY_BOOSTS:
+    count = 0
+    for b in blocks:
+      if b['pathway'] == pboost['pathway']:
+        count += 1
+        if count == 3:
+          # got boost!
+          active_pboosts.append(pboost)
+          break
+
+  return (active_bboosts, active_pboosts)
 
 # Return the total boosted score of these blocks.
 def boosted_score(blocks, boosts):
-  gotten = total_boost(blocks, boosts)
-  tboost = sum(map(lambda b: b['pct'], gotten))
+  (bboosts, pboosts) = total_boost(blocks, boosts)
+  tboost = sum([b['pct'] for b in bboosts]) + sum([b['pct'] for b in pboosts])
   score = sum(map(lambda b: b['scores']['total'], blocks))
   boosted_score = round(score * (1+1.0*tboost/100), 2)
   return (boosted_score, tboost)
@@ -289,6 +327,34 @@ def best_expansions(hood, blocks, boosts):
 
   return (best_by_score, best_by_boost)
 
+"""
+      "entity_type": {
+        "name": "street-h 6",
+        "width": 1,
+        "height": 1,
+        "residential_score": 0,
+        "commercial_score": 0,
+        "industrial_score": 0,
+        "image": "street-h-6.png",
+        "zone": "pathway-h",
+        "weight": 0,
+        "residential_boost": 0,
+        "commercial_boost": 0,
+        "industrial_boost": 0
+      },
+"""
+
+#blocks = read_json("data/all_blocks.json")
+#print(len(blocks))
+#i = 0
+#for block in blocks:
+#  if i > 200:
+#    break
+#  for entity in block['entities']:
+#    etype = entity['entity_type']
+#    if "pathway" in etype['zone'] and "-x-" in etype['name']:
+#      print(f"{block['name']}: zone: {etype['zone']} | name: {etype['name']}")
+#  i += 1
 
 #(blocks, boosts, buildings, public) = load_all()
 #(byscore, byboost) = best_expansions(blocks[0:2], blocks, boosts)
