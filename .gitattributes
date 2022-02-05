@@ -1,2 +1,1 @@
-metroverse/data/* filter=lfs diff=lfs merge=lfs -text
-metroverse/eb-app/data/* filter=lfs diff=lfs merge=lfs -text
+metroverse/*/data/* filter=lfs diff=lfs merge=lfs -text
