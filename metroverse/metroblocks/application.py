@@ -2,7 +2,6 @@ from flask import Flask
 
 import blocks
 import content
-import donate
 
 from api import blockchain
 
@@ -19,11 +18,6 @@ def index():
 def refresh_staked_blocks():
     num = blockchain.refresh_staked_blocks()
     return f"there are {num} staked blocks"
-
-
-@application.route('/donate')
-def donation():
-    return donate.donate()
 
 
 @application.route('/read')

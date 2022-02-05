@@ -2,6 +2,8 @@
 title = '''
 <html><head>
 <title>Metroblocks</title>
+<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+<script src="/static/donate.js" defer></script>
 <link rel="stylesheet" type="text/css" href="/static/style.css">
 </head>
 <body>
@@ -15,6 +17,7 @@ def header(page):
   <a {'class="active"' if page == 'buildings' else ''} href="/buildings">Buildings</a>
   <a {'class="active"' if page == 'ranks' else ''} href="/ranks">Ranks</a>
   <a {'class="active"' if page == 'faq' else ''} href="/faq">FAQ</a>
+  <div title="If you like Metroblocks, consider donating :)  Anything is much appreciated. Thank you!" onclick='donate()'>Donate</div>
 </div>
 <div class="body">
 '''
@@ -55,7 +58,7 @@ FAQ = '''
 
 <li>How do I contact you?
 <ul><li>If you have any feedback, questions, or ideas, please contact me on the Metroverse Discord at GrainOfSalt#1158
-<li>If you're feeling generous, drop me a tip (either ETH or MET ;)): <code>0x130137F563e12bF4592B4280b488A270C96Cb2A3</code>
+<li>If you're feeling generous, drop me a tip (either ETH or MET ;)): <code style="font-weight: bold">0x130137F563e12bF4592B4280b488A270C96Cb2A3</code>
 </ul>
 </ul>
 
