@@ -21,7 +21,7 @@ PATHWAY_BOOSTS = [
 
 
 def last_stake_update():
-    return datetime.fromtimestamp(os.path.getmtime(DATA_PATH + "staked.txt")).strftime("%Y-%m-%d %H:%M:%S UTC")
+    return datetime.fromtimestamp(os.path.getmtime(DATA_PATH + "staked.txt")).strftime("%Y-%m-%d %H:%M UTC")
 
 
 def load_all():
