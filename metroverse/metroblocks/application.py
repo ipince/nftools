@@ -2,6 +2,7 @@ from flask import Flask
 
 import blocks
 import content
+import json
 
 from api import blockchain
 
@@ -12,6 +13,75 @@ application = Flask(__name__)
 @application.route('/')
 def index():
     return blocks.index()
+
+
+@application.route('/api/hood/<blocknums>')
+def api_hood(blocknums):
+    # Return some dummy data for frontend development.
+    data = {
+        "blocks": [
+            {
+                "num": 1,
+                "name": "Block #1",
+                "score": 123,
+                "buildings": [
+                    {
+                        "name": "Hospital",
+                        "type": "Public",
+                    },  # more...
+                ],
+                "pathway": None,
+            },
+            {
+                "num": 2,
+                "name": "Block #2",
+                "score": 130,
+                "buildings": [
+                    {
+                        "name": "Fire Station",
+                        "type": "Public",
+                    },  # more...
+                ],
+                "pathway": "Railway",
+            },  # more...
+        ],
+        "building_boosts": [
+            {
+                "name": "Safety",
+                "enabled": True,
+                "pct": 5,
+                "buildings": [
+                    {
+                        "name": "Hospital",
+                        "blocks": [1],
+                    },
+                    {
+                        "name": "Police Station",
+                        "blocks": [],
+                    },
+                    {
+                        "name": "Fire Station",
+                        "blocks": [1, 2],
+                    }
+                ]
+            },  # more...
+        ],
+        "pathway_boosts": [
+            {
+                "name": "Railway Pathway",
+                "enabled": True,
+                "pct": 4,
+                "blocks": [2],
+            },
+            {
+                "name": "River Pathway",
+                "enabled": False,
+                "pct": 8,
+                "blocks": [],
+            },
+        ]
+    }
+    return json.dumps(data, indent=2)
 
 
 @application.route('/refresh-staked-blocks')
