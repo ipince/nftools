@@ -16,6 +16,7 @@ def header(page):
   <a {'class="active"' if page == 'hoods' else ''} href="/hood">Hoods</a>
   <a {'class="active"' if page == 'buildings' else ''} href="/buildings">Buildings</a>
   <a {'class="active"' if page == 'ranks' else ''} href="/ranks">Ranks</a>
+  <a {'class="active"' if page == 'owners' else ''} href="/owners">Owners</a>
   <a {'class="active"' if page == 'faq' else ''} href="/faq">FAQ</a>
   <div title="If you like Metroblocks, consider donating :)  Anything is much appreciated. Thank you!" onclick='donate()'>Donate</div>
 </div>
@@ -74,12 +75,13 @@ FAQ = '''
 <li>Upcoming
 <ul>
 <li>Add Pathway Boosts to Hood Simulator
+<li>Add more visible tip jar
+<li>Show whether a block is staked or not (automatic). Right now I update this manually.
+
 <li>Add Pathway Boost page to see which blocks have which pathways
 <li>Improve hood expansion calculation to prioritize hoods that add pathway boosts
-<li>Add more visible tip jar
 <li>Implement stackable boosts (with 0.5 decay), as mentioned in AMA.
 <li>Show whether a block is listed on OpenSea, and its price. I'm waiting on an OpenSea API key for this.
-<li>Show whether a block is staked or not (automatic). Right now I update this manually.
 <li>Win-Wins: Given two hoods, does there exist a block trade that results in <b>both</b> hoods being better off?
 <li>Trading Platform: link up your wallet to the site. If you want a specific block, you can message the owner of that block. When the owner links up their wallet, they'll be able to see your message and message you back!
 </ul>

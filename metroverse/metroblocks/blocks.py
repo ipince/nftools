@@ -47,8 +47,8 @@ def hood(blocks=None):
         return content.with_body(hood_instructions, 'hoods')
     try:
         indeces = list(map(lambda s: int(s.strip()), blocks.split(",")))
-        if len(indeces) > 100:
-            return content.with_body("Please limit your input to 100 blocks", 'hoods')
+        if len(indeces) > 120:
+            return content.with_body("Please limit your input to 120 blocks", 'hoods')
         blocks = list(filter(lambda b: b['num'] in indeces, BLOCKS))
 
         (bboosts, pboosts) = mv.total_boost(blocks, BOOSTS)
@@ -137,6 +137,34 @@ def hood(blocks=None):
             'hoods')
 
 
+def owners():
+    (sorted_owners, last_updated) = mv.load_owners()
+    body = f"""
+    <h1>Owners (aka Whale Watch)</h1>
+    <p>This is a list of all block owners, <em>including owners of staked blocks</em>, as of <b>{last_updated}</b>.
+    <p>In total, there are <b>{len(sorted_owners)}</b> <em>true</em> distinct owners.
+    <p><table>
+    <tr><th style='width: 10'>Rank</th><th>Address</th><th>Blocks</th></tr>
+    """
+    i = 1
+    for address, blocks in sorted_owners:
+        blockstrs = [str(b) for b in blocks]
+        hrefs = [f"<a href='/b/{b}'>#{b}</a>" for b in blocks]
+        emoji = ""
+        if len(blocks) >= 30:
+            emoji = "🐋 "
+        body += f"<tr><td>{i}</td>"
+        body += f"<td>{emoji}{KNOWN[address] if address in KNOWN else address} ({len(blocks)})<br/>"
+        body += f"<a target='_blank' href='{opensea_profile(address)}'>OpenSea</a> | "
+        body += f"<a target='_blank' href='https://etherscan.io/address/{address}'>Etherscan</a> | "
+        body += f"see <a target='_blank' href='/hood/{','.join(blockstrs)}'>Hood</a></td>"
+        body += f"<td>{', '.join(hrefs)}</td></tr>"
+        i += 1
+    body += "</table>"
+
+    return content.with_body(body, 'owners')
+
+
 def fmt_score(score):
     return "{:.2f}".format(score)
 
@@ -222,6 +250,9 @@ def render_block(block):
 """
 
 
+def opensea_profile(address):
+    return f"https://opensea.io/{address}"
+
 def opensea(block):
     return f"https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{block['num']}"
 
@@ -246,14 +277,20 @@ def render_boosts(blocks=None, highlight=False):
         for b in boost['buildings']:
             # which blocks have building b?
             blocks_with_b = [block for block in blocks if b in block['buildings']['all']]
+            count = 0
+            if b in BUILDINGS:
+                count = BUILDINGS[b]['count']
+            else:
+                count = PUBLIC[b]['count']
+            pct = 100.0*count/10000
             if len(blocks_with_b) > 0:
-                s += f"""<td style='background: darkseagreen'>{b}<br/>"""
+                s += f"""<td style='background: darkseagreen'>{b} ({pct}%)<br/>"""
                 for block in blocks_with_b:
                     if highlight:
                         s += f""" <a href="#{block['num']}">#{block['num']}</a>"""
                 s += "</td>"
             else:
-                s += f"<td>{b}</td>"
+                s += f"<td>{b} ({pct}%)</td>"
         if boost['name'] in bboosts_names:
             s += f"<td style='background: darkseagreen'>{boost['pct']}%</td>"
         else:
@@ -295,3 +332,4 @@ def render_pathway_boosts(blocks):
 
 
 (BLOCKS, BOOSTS, BUILDINGS, PUBLIC) = mv.load_all()
+KNOWN = mv.read_json('data/known.json')
