@@ -1,5 +1,6 @@
 import json
 import os
+import api.blockchain
 
 from collections import defaultdict
 from datetime import datetime
@@ -24,10 +25,19 @@ def last_stake_update():
     return datetime.fromtimestamp(os.path.getmtime(DATA_PATH + "staked.txt")).strftime("%Y-%m-%d %H:%M UTC")
 
 
+def load_owners():
+    file = DATA_PATH + "owners_all.json"
+    last_updated = datetime.fromtimestamp(os.path.getmtime(file)).strftime("%Y-%m-%d %H:%M UTC")
+    owners = api.blockchain.load(file)
+    owners = api.blockchain.sorted_owners(owners)
+    return owners, last_updated
+
+
 def load_all():
     (blocks, buildings, public, boosts, staked) = load_data()
     (buildings, public) = transform_buildings(buildings, public, boosts)
     blocks = transform(blocks, buildings, public, boosts, staked)
+    buildings_by_rarity(blocks, buildings, public)
     rank_blocks(blocks)
     return blocks, boosts, buildings, public
 
@@ -88,6 +98,9 @@ def buildings_by_rarity(all_blocks, buildings, public):
             if not counted_for_block:
                 bcounts[b] += 1
 
+    for bname in bcounts:
+        all_buildings[bname]['count'] = bcounts[bname]
+
     sorted_buildings = sorted(all_buildings, key=lambda b: bcounts[b])
     return sorted_buildings, bcounts, counts
 
@@ -114,6 +127,12 @@ def compute_score(block):
 
 
 def transform_buildings(buildings, public, boosts):
+    """
+    Converts the lists of buildings into dictionaries, keyed by the
+    building names.
+
+    Also enriches each building entry with boost that it is a part of, if any.
+    """
     bmap = {}
     for b in buildings:
         bmap[b['name']] = b
