@@ -1,14 +1,17 @@
 import json
 import os
-import api.blockchain
 
 from collections import defaultdict
+from collections import Counter
 from datetime import datetime
+
+import api.data
 
 DATA_PATH = "data/"
 
+BOOSTS_DICT = {}
 PATHWAY_BOOSTS = [
-    {
+{
         "name": "Railway Pathway",
         "pathway": "rail",
         "pct": 4,
@@ -28,17 +31,23 @@ def last_stake_update():
 def load_owners():
     file = DATA_PATH + "owners_all.json"
     last_updated = datetime.fromtimestamp(os.path.getmtime(file)).strftime("%Y-%m-%d %H:%M UTC")
-    owners = api.blockchain.load(file)
-    owners = api.blockchain.sorted_owners(owners)
+    owners = api.data.load(file)
+    owners = sorted_owners(owners)
     return owners, last_updated
 
 
 def load_all():
     (blocks, buildings, public, boosts, staked) = load_data()
+    global BOOSTS_DICT
+    for boost in boosts:
+        BOOSTS_DICT[boost["name"]] = boost
+        BOOSTS_DICT[boost["name"]]["pct"] *= 100
+
     (buildings, public) = transform_buildings(buildings, public, boosts)
     blocks = transform(blocks, buildings, public, boosts, staked)
     buildings_by_rarity(blocks, buildings, public)
     rank_blocks(blocks)
+
     return blocks, boosts, buildings, public
 
 
@@ -217,6 +226,29 @@ def rank_blocks(blocks):
         block_dict[b['num']]['rank'] = i + 1
 
 
+def total_boostv2(blocks, boosts):
+    """Returns a dict of active boosts, where the value is the number of times the boost is active.
+
+    For example, a return value may be { "Safety": 2, "Education": 2 }
+    """
+    buildings_in_hood = []
+    if blocks is not None:
+        for b in blocks:
+            buildings_in_hood.extend(list(b['buildings']['all'].keys()))
+
+    buildings_counter = Counter(buildings_in_hood)
+
+    gotten = {}
+    for boost in boosts:
+        buildings_in_boost_counter = [buildings_counter[building] for building in boost["buildings"]]
+        num_stacked_boost = min(buildings_in_boost_counter)
+        if num_stacked_boost == 0:
+            continue
+        gotten[boost["name"]] = num_stacked_boost
+
+    return gotten
+
+
 # Return the boosts that these blocks qualify for (TODO: and their counts)
 def total_boost(blocks, boosts):
     names = set()
@@ -243,10 +275,45 @@ def total_boost(blocks, boosts):
     return active_bboosts, active_pboosts
 
 
+def boost_formula(num_blocks, num_stacked_boost, boost_perc):
+    HOOD_THRESHOLD = 10
+
+    # What we want: if a hood has 3 stacked boosts, then,
+    # if the hood has <10 blocks, the boost should stack as 1+0.5+0.5^2
+    # if the hood has >10 blocks,
+    spreaded_boost_multiplier = 1000 * num_stacked_boost * HOOD_THRESHOLD // max(num_blocks, HOOD_THRESHOLD)
+
+    if spreaded_boost_multiplier >= 3000:
+        spreaded_boost_multiplier = 1750
+    elif spreaded_boost_multiplier >= 2000:
+        spreaded_boost_multiplier = 1500 + (spreaded_boost_multiplier-2000)//4
+    elif spreaded_boost_multiplier > 1000:
+        spreaded_boost_multiplier = 1000 + (spreaded_boost_multiplier-1000)//2
+
+    return boost_perc * spreaded_boost_multiplier
+
+
+def boosted_scorev2(blocks, boosts):
+    tboost = 0
+    gotten = total_boostv2(blocks, boosts)
+    for boost in gotten:
+        print(f"checking {boost}")
+        theoretical_boost_perc = BOOSTS_DICT[boost]['pct']
+        actual_boost_perc = boost_formula(len(blocks), gotten[boost], theoretical_boost_perc)
+        tboost += actual_boost_perc
+
+    score = sum(map(lambda b: b['scores']['total'], blocks))
+
+    boosted_score = (score * (10000 + tboost // 1000)) // 10000
+    return boosted_score, tboost // 1000
+
+
+
 # Return the total boosted score of these blocks.
 def boosted_score(blocks, boosts):
     (bboosts, pboosts) = total_boost(blocks, boosts)
     tboost = sum([b['pct'] for b in bboosts]) + sum([b['pct'] for b in pboosts])
+    tboost = tboost / 100
     raw_score = sum(map(lambda b: b['scores']['total'], blocks))
     boostedscore = round(raw_score * (1 + 1.0 * tboost / 100), 2)
     return boostedscore, tboost
@@ -269,6 +336,46 @@ def best_expansions(hood, blocks, boosts):
     best_by_boost = sorted(options, key=lambda o: (o['boost'], o['score']), reverse=True)
 
     return best_by_score, best_by_boost
+
+
+def sorted_owners(owners):
+    sorted_keys = sorted(owners.keys(), key=lambda o: (-len(owners[o]), min(owners[o])))
+    sorted_owners = [(k, sorted(list(owners[k]))) for k in sorted_keys]
+    return sorted_owners
+
+
+def print_owners(owners):
+    total = 0
+    for (owner, blocks) in sorted_owners(owners):
+        print(f"{owner}: {blocks}")
+        total += len(blocks)
+    print(f"Found {len(owners)} distinct owners for {total} BLOCKS")
+
+
+# low scores low boosts (10): 543,689,799,1996,2894,3317,4395,4691,4886,7213
+# high scores low boosts (10):
+
+
+# low scores with no boosts: 7213,4395,2800,2538,8411,4527,5527,9242,2542,8444
+# high scores with no boosts: 6188,8565,9124,1900,3678,764,484,1677,7229,9804
+# transport boost: 9977, 9979, 9983
+
+# 20-block with 4-transport boost: 7213,4395,2800,2538,8411,4527,5527,9242,2542,8444,6188,8565,9124,1900,3678,1677,484,9977,9979,9963 => 6399
+# 10-block low-end: 7213,4395,2800,2538,8411,4527,484,9242,2542,9963 => 2848
+# 10-block high-end: 5527,8444,6188,8565,9124,1900,3678,1677,9977,9979 => 3523
+
+# blocks, boosts, buildings, public = load_all()
+# for block in blocks:
+#     active_boosts = total_boostv2([block], boosts)
+    # if any(active_boosts.values()):
+    #    print(f"block {block['num']} has {active_boosts}")
+#
+# indeces = [168,227,282,350,484,570,764,797,806,853,917,979,1845,3665,3712,6290,9242,9922,9979,9983]
+# selected = []
+# for i in indeces:
+#     selected.append(blocks[i-1])
+# s = sorted(selected, key=lambda b: b['scores']['total'])
+# print([b['num'] for b in s])
 
 # blocks = read_json("data/all_blocks.json")
 # print(len(blocks))

@@ -1,14 +1,18 @@
 import json
 import time
 import os
-
 import requests
+import dotenv
 
 from collections import defaultdict
 from datetime import datetime
 
 from web3 import Web3
 from ens import ENS
+
+import data
+
+dotenv.load_dotenv()
 
 ETHERSCAN_KEY = os.environ["ETHERSCAN_KEY"]
 ETHERSCAN_API = "https://api.etherscan.io/api"
@@ -68,10 +72,11 @@ def get_erc721_transactions(wallet, contract, endblock=99999999):
 
 
 def get_vault_transactions(endblock=99999999):
-    get_erc721_transactions(VAULT_CONTRACT_ADDRESS, BLOCK_TOKEN_CONTRACT_ADDRESS, endblock=endblock)
+    return get_erc721_transactions(VAULT_CONTRACT_ADDRESS, BLOCK_TOKEN_CONTRACT_ADDRESS, endblock=endblock)
 
 
 def get_staked_owners(owners, staked):
+    print(ETHERSCAN_KEY)
     print(f"Finding owners for {len(staked)} staked blocks...")
     unresolved = defaultdict(set)
     seen = set()
@@ -143,36 +148,11 @@ def get_all_owners():
     owners = get_unstaked_owners(owners, unstaked)
     save_owners(owners, 'data/owners_all.json')
 
-    print_owners(owners)
-
 
 def save_owners(owners, file):
+    # Convert from {str->set} to {str->list}
     o = {k: list(v) for k, v in owners.items()}
-    save(o, file)
-
-
-def save(data, file):
-    with open(file, 'w') as f:
-        f.write(json.dumps(data, indent=2))
-
-
-def load(file):
-    with open(file, 'r') as f:
-        return json.loads(f.read())
-
-
-def sorted_owners(owners):
-    sorted_keys = sorted(owners.keys(), key=lambda o: (-len(owners[o]), min(owners[o])))
-    sorted_owners = [(k, sorted(list(owners[k]))) for k in sorted_keys]
-    return sorted_owners
-
-
-def print_owners(owners):
-    total = 0
-    for (owner, blocks) in sorted_owners(owners):
-        print(f"{owner}: {blocks}")
-        total += len(blocks)
-    print(f"Found {len(owners)} distinct owners for {total} BLOCKS")
+    data.save(o, file)
 
 
 def reverse_ens(addresses):
@@ -184,23 +164,11 @@ def reverse_ens(addresses):
     return reversed
 
 
+# Save/update known
 # known = load("data/known.json")
 # owners = load("data/owners_all.json")
 # reversed = reverse_ens(owners.keys())
 # known.update(reversed)
 # save(known, "data/known.json")
 
-# ENS_REGISTRAR_CONTRACT = "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85"
-# ef = "0x12F37431468eb75c2a825e2Cf8Fde773aD94c8EA"
-# whittle = "0x457e57e36048f1189d1f83b6f94371cbc504a476"
-# addr = whittle
-#
-# txns = get_erc721_transactions(addr, ENS_REGISTRAR_CONTRACT)
-# print(txns)
-#
-# name = ns.reverse_domain(addr)
-# print(name)
-#
-# #get_all_owners()
-#
-# print(ns.name(addr))
+#get_all_owners()

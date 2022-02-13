@@ -14,13 +14,6 @@ hood_instructions = """
 The Hood Simulator lets you check which neighborhood boosts you would get if you were to stake a set of blocks. Try it out with an example: <a href="/hood/1,2,3">1,2,3</a>.
 """
 
-hood_warning = """
-<div style="width: 800"><small><em>WARNING:</em> the neighborhood boosts feature is not released yet. The boosts will likely be stackable (with a decaying factor of 0.5), but this simulator DOES NOT YET calculate stacked boosts, only single boosts. I'll implement stacked boosts once we actually know for sure how the calculation will be made.
-<p>
-If you plan to optimize your neighborhoods before this feature is released, please be aware that <a href="https://docs.metroverse.com/overview/neighborhood-boost#feature-release">large hoods will have limitations on how boost % is calculated</a> to ensure they do not receive a disproportionate share of MET earnings.
-</small></div>
-"""
-
 
 def index():
     return content.with_body(instructions, 'blocks')
@@ -51,10 +44,8 @@ def hood(blocks=None):
             return content.with_body("Please limit your input to 120 blocks", 'hoods')
         blocks = list(filter(lambda b: b['num'] in indeces, BLOCKS))
 
-        (bboosts, pboosts) = mv.total_boost(blocks, BOOSTS)
-        tboost = sum([b['pct'] for b in bboosts]) + sum([b['pct'] for b in pboosts])
+        boosted_score, tboost = mv.boosted_scorev2(blocks, BOOSTS)
         score = sum(map(lambda b: b['scores']['total'], blocks))
-        boosted_score = round(score * (1 + 1.0 * tboost / 100), 2)  # keep in sync w mv.boosted_score()
 
         # Find best expansions:
         (byscore, byboost) = mv.best_expansions(blocks, BLOCKS, BOOSTS)
@@ -63,9 +54,8 @@ def hood(blocks=None):
         names = [b['name'] for b in blocks]
         body = f"""
         <h1>Hood Simulator</h1>
-        <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}. Your total hood boost is <span style="font-size: 18"><b>{tboost}%</b></span>.<br/>
-        This hood would produce <b><span style="font-size: 16">{score}<span></b> MET per day (now), and <b><span style="font-size: 16">{boosted_score}</span></b> MET per day after boosting is released.
-        <p>{hood_warning}
+        <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}. Your total hood boost is <span style="font-size: 18"><b>{tboost/100}%</b></span>.<br/>
+        This hood would produce <b><span style="font-size: 16">{score}<span></b> MET per day without boosting, and <b><span style="font-size: 16">{boosted_score}</span></b> MET per day with boosting.
         <div>{render_boosts(blocks, highlight=True)}</div>
         <div>{render_pathway_boosts(blocks)}</div>
         """
@@ -217,7 +207,7 @@ def render_block(block):
             s = f"        {build['name']} (score {build['score']}, weight {build['weight']}) "
 
             if 'boost_name' in build:
-                s += f" <b>[{build['boost_name']} - {build['pct']}%]</b>"
+                s += f" <b>[{build['boost_name']} - {build['pct']//100}%]</b>"
             bldg_strs.append(s + "\n")
         strs.append(bldg_strs)
 
@@ -225,7 +215,7 @@ def render_block(block):
     for pub in block['buildings']['pub'].values():
         s = f"        {pub['name']}"
         if 'boost_name' in pub:
-            s += f" <b>[{pub['boost_name']} - {pub['pct']}%]</b>"
+            s += f" <b>[{pub['boost_name']} - {pub['pct']//100}%]</b>"
         pubs.append(s)
 
     bnum = block['num']
@@ -292,9 +282,9 @@ def render_boosts(blocks=None, highlight=False):
             else:
                 s += f"<td>{b} ({pct}%)</td>"
         if boost['name'] in bboosts_names:
-            s += f"<td style='background: darkseagreen'>{boost['pct']}%</td>"
+            s += f"<td style='background: darkseagreen'>{boost['pct']//100}%</td>"
         else:
-            s += f"<td>{boost['pct']}%</td>"
+            s += f"<td>{boost['pct']//100}%</td>"
         s += "</tr>"
     #        s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
     return s + "</table>"

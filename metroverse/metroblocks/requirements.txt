@@ -33,6 +33,7 @@ parsimonious==0.8.1
 protobuf==3.19.3
 pycryptodome==3.13.0
 pyrsistent==0.18.1
+python-dotenv==0.19.2
 requests==2.27.1
 rlp==2.0.1
 six==1.16.0
