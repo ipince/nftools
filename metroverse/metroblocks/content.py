@@ -15,16 +15,17 @@ def header(page):
   <a {'class="active"' if page == 'blocks' else ''} href="/">Blocks</a>
   <a {'class="active"' if page == 'hoods' else ''} href="/hood">Hoods</a>
   <a {'class="active"' if page == 'buildings' else ''} href="/buildings">Buildings</a>
+  <a {'class="active"' if page == 'pathways' else ''} href="/pathways">Pathways</a>
   <a {'class="active"' if page == 'ranks' else ''} href="/ranks">Ranks</a>
   <a {'class="active"' if page == 'owners' else ''} href="/owners">Owners</a>
   <a {'class="active"' if page == 'faq' else ''} href="/faq">FAQ</a>
-  <div title="If you like Metroblocks, consider donating :)  Anything is much appreciated. Thank you!" onclick='donate()'>Donate</div>
+  <div title="If you like Metroblocks, consider donating :)  Anything is much appreciated. Thank you!" onclick='donate()'>Tip Jar!</div>
 </div>
 <div class="body">
 '''
 
 footer = '''
-<p>---<p>Feedback? Ideas? See the <a href="/faq">FAQ</a> or contact me on Metroverse discord: GrainOfSalt#1158
+<p>---<p>Feedback? Ideas? See the <a href="/faq">FAQ</a> or contact me on Metroverse discord: GrainOfSalt#1158. Find the site useful? Consider <span onclick='donate()' style='cursor: pointer; color: blue; text-decoration: underline'>tipping</span>!
 </div>
 </body>
 '''

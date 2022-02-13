@@ -54,9 +54,21 @@ def hood(blocks=None):
         names = [b['name'] for b in blocks]
         body = f"""
         <h1>Hood Simulator</h1>
-        <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}. Your total hood boost is <span style="font-size: 18"><b>{tboost/100}%</b></span>.<br/>
-        This hood would produce <b><span style="font-size: 16">{score}<span></b> MET per day without boosting, and <b><span style="font-size: 16">{boosted_score}</span></b> MET per day with boosting.
-        <div>{render_boosts(blocks, highlight=True)}</div>
+        <p>Analyzing hood with {len(blocks)} block(s): {', '.join(names)}.
+        <p>Your total hood boost is <span style="font-size: 18"><b>{tboost/100}%</b></span>.
+        <p>This hood would produce <b><span style="font-size: 16">{score}<span></b> MET per day without boosting, and <b><span style="font-size: 16">{boosted_score}</span></b> MET per day with boosting.
+        """
+        if len(blocks) > 10:
+            lhm = mv.large_hood_multiplier(len(blocks))
+            body += f"""
+            <p><em>NOTE</em>: Because your hood is larger than 10 blocks, you have a large hood
+            multiplier of <b>{lhm/1000}</b> (calculated as <code>10/number_of_blocks</code>).
+            <br/>Please note that you will <b>not</b> be better off splitting your hood into smaller hoods.
+            Try it out and see for yourself :)
+            """
+
+        body += f"""
+        <div>{render_boosts(blocks, highlight=True, render_stacked=True)}</div>
         <div>{render_pathway_boosts(blocks)}</div>
         """
 
@@ -87,7 +99,7 @@ def hood(blocks=None):
             body += f"""
             <tr><td><a href="/b/{byscore[i]['block']['num']}">{byscore[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
             <td>{staked}</td>
-            <td>{byscore[i]['boost']}%</td>
+            <td>{byscore[i]['boost']/100}%</td>
             <td>{fmt_score(byscore[i]['score'])}</td>
             <td>{delta}</td></tr>"""
         body += """
@@ -106,7 +118,7 @@ def hood(blocks=None):
             body += f"""
             <tr><td><a href="/b/{byboost[i]['block']['num']}">{byboost[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
             <td>{staked}</td>
-            <td>{byboost[i]['boost']}%</td>
+            <td>{byboost[i]['boost']/100}%</td>
             <td>{fmt_score(byboost[i]['score'])}</td>
             <td>{delta}</td></tr>"""
 
@@ -156,7 +168,7 @@ def owners():
 
 
 def fmt_score(score):
-    return "{:.2f}".format(score)
+    return "{:.0f}".format(score)
 
 
 def buildings():
@@ -179,6 +191,34 @@ def buildings():
     return content.with_body(body, 'buildings')
 
 
+def render_block_list(title, blocks):
+    """Renders a table of blocks with just the block name (and link)"""
+    body = f"""<p>{title} ({len(blocks)})</p>
+    <table>
+    <tr><th>Block</th></tr>
+    """
+    for block in blocks:
+        body += f"<tr><td><a href='/b/{block['num']}'>{block['name']}</a></td></tr>"
+    body += "</table>"
+    return body
+
+
+def pathways():
+    double_river = [b for b in BLOCKS if b['pathway'] == 'river']
+    double_rail = [b for b in BLOCKS if b['pathway'] == 'rail']
+    body = f"""
+    <h1>Pathways</h1>
+    <p>Curious about which blocks have double river or double rail? Here you go!
+    <p>
+    <div class="row">
+        <div class="column">{render_block_list("Blocks with Double River", double_river)}</div>
+        <div class="column">{render_block_list("Blocks with Double Rail", double_rail)}</div>
+    </div>
+    """
+
+    return content.with_body(body, 'pathways')
+
+
 def ranks():
     body = """<h1>Block Ranks</h1>
 
@@ -190,7 +230,15 @@ def ranks():
     sorted_blocks = sorted(BLOCKS, key=lambda b: b['rank'])
     body += f"<tr><th>Block Name</th><th>Staked?<br><small>as of {mv.last_stake_update()}</small></th><th>Score (unboosted)</th><th>Rank (of unboosted score)</th><th>Boost (pct)</th><th>Score (boosted)</th><th style='background: darkseagreen'>Rank (of boosted score)</th></tr>"
     for b in sorted_blocks:
-        body += f"<tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td><td>{'Yes' if b['staked'] else 'No'}</td><td>{b['scores']['total']}</td><td>{b['raw_rank']}</td><td>{b['scores']['pct']}%</td><td>{b['scores']['boosted']}</td><td>{b['rank']}</td></tr>"
+        body += f"""
+        <tr><td><a href='b/{b['num']}'>{b['name']}</a> (<a href={opensea(b)}>OpenSea</a>)</td>
+        <td>{'Yes' if b['staked'] else 'No'}</td>
+        <td>{b['scores']['total']}</td>
+        <td>{b['raw_rank']}</td>
+        <td>{b['scores']['pct']/100}%</td>
+        <td>{b['scores']['boosted']}</td>
+        <td>{b['rank']}</td></tr>
+        """
 
     body += "</table>"
     return content.with_body(body, 'ranks')
@@ -243,27 +291,42 @@ def render_block(block):
 def opensea_profile(address):
     return f"https://opensea.io/{address}"
 
+
 def opensea(block):
     return f"https://opensea.io/assets/0x0e9d6552b85be180d941f1ca73ae3e318d2d4f1f/{block['num']}"
 
 
-def render_boosts(blocks=None, highlight=False):
-    (active_bboosts, active_pboosts) = mv.total_boost(blocks, BOOSTS)
-    bboosts_names = [x['name'] for x in active_bboosts]
+def render_boosts(blocks=None, highlight=False, render_stacked=False):
+    active_bboosts = mv.total_boostv2(blocks, BOOSTS)
 
     names = set()
     if blocks is not None:
         for b in blocks:
             names.update(b['buildings']['all'].keys())
     s = """
-<h2 style="margin-bottom: 2">Building Boosts</h2>
-<small>(reference <a href='https://docs.metroverse.com/overview/neighborhood-boost#list-of-neighborhood-boosts'>docs</a>)</small>
-<p>
-<table>
-"""
-    s += "<tr><th>Name</th><th>Building 1</th><th>Building 2</th><th>Building 3</th><th>Boost %</th></tr>"
+    <h2 style="margin-bottom: 2">Building Boosts</h2>
+    <small>(reference <a href='https://docs.metroverse.com/overview/neighborhood-boost#list-of-neighborhood-boosts'>docs</a>)</small>
+    <p>
+    <table>
+    """
+    s += """<tr>
+    <th>Name</th>
+    <th>Boost % (base)</th>
+    <th>Building 1</th>
+    <th>Building 2</th>
+    <th>Building 3</th>
+    """
+    if render_stacked:
+        s += """
+        <th>Stacked boosts</th>
+        <th>Total Boost %<br><small style="font-weight: normal">(includes large hood multiplier)</small></th>
+        """
+    s += "</tr>"
+
     for boost in BOOSTS:
         s += f"<tr><td>{boost['name']}</td>"
+        s += f"<td>{boost['pct']//100}%</td>"
+
         for b in boost['buildings']:
             # which blocks have building b?
             blocks_with_b = [block for block in blocks if b in block['buildings']['all']]
@@ -274,6 +337,7 @@ def render_boosts(blocks=None, highlight=False):
                 count = PUBLIC[b]['count']
             pct = 100.0*count/10000
             if len(blocks_with_b) > 0:
+                # TODO: move to highlight_if
                 s += f"""<td style='background: darkseagreen'>{b} ({pct}%)<br/>"""
                 for block in blocks_with_b:
                     if highlight:
@@ -281,27 +345,48 @@ def render_boosts(blocks=None, highlight=False):
                 s += "</td>"
             else:
                 s += f"<td>{b} ({pct}%)</td>"
-        if boost['name'] in bboosts_names:
-            s += f"<td style='background: darkseagreen'>{boost['pct']//100}%</td>"
-        else:
-            s += f"<td>{boost['pct']//100}%</td>"
+
+        if render_stacked:
+            stacked = active_bboosts[boost['name']] if boost['name'] in active_bboosts else 0
+            s += f"<td {highlight_if(stacked>0)}>{stacked}</td>"
+
+            total_boost = mv.boost_formula(len(blocks), stacked, boost['pct'])//1000/100
+            s += f"<td {highlight_if(total_boost>0)}>{total_boost}%</td>"
+
         s += "</tr>"
     #        s += f"<li><b>{b['name']} ({b['pct']}%):</b> {', '.join(b['buildings'])}</li>"
     return s + "</table>"
 
 
+def highlight_if(condition):
+    HIGHLIGHT_COLOR = "darkseagreen"
+    if condition:
+        return f"style='background: {HIGHLIGHT_COLOR}'"
+    return ""
+
+
 def render_pathway_boosts(blocks):
-    (_, pboosts) = mv.total_boost(blocks, BOOSTS)
-    pboosts_names = [x['name'] for x in pboosts]
+    pboosts = mv.get_active_pathway_boosts(blocks)
+    pboosts_names = pboosts.keys()
     s = """
-<h2 style="margin-bottom: 2">Pathway Boosts</h2>
-<small>(reference <a href='https://docs.metroverse.com/overview/pathway-boost#pathway-boost'>docs</a>)</small>
-<p><table>
-<tr><th>Name</th><th>Blocks with 2 of same kind</th><th>Boost %</th></tr>
-"""
-    for pboost in mv.PATHWAY_BOOSTS:
+    <h2 style="margin-bottom: 2">Pathway Boosts</h2>
+    <small>(reference <a href='https://docs.metroverse.com/overview/pathway-boost#pathway-boost'>docs</a>)</small>
+    <p><table>
+    <tr><th>Name</th>
+    <th>Boost % (base)</th>
+    <th>Blocks with 2 of same kind</th>
+    <th>Stacked boosts</th>
+    <th>Total Boost %<br><small style="font-weight: normal">(includes large hood multiplier)</small></th>
+    </tr>
+    """
+    for pboost in mv.PATHWAY_BOOSTS.values():
         some = False
+
+        # Boost name and %
         s += f"<tr><td>{pboost['name']}</td>"
+        s += f"<td>{pboost['pct']//100}%</td>"
+
+        # Buildings
         if pboost['name'] in pboosts_names:
             s += "<td style='background: darkseagreen'>"
         else:
@@ -313,10 +398,17 @@ def render_pathway_boosts(blocks):
         if not some:
             s += "None :("
         s += "</td>"
-        if pboost['name'] in pboosts_names:
-            s += f"<td style='background: darkseagreen'>{pboost['pct']}%</td></tr>"
-        else:
-            s += f"<td>{pboost['pct']}%</td></tr>"
+
+        # Stacked
+        stacked = pboosts[pboost['name']] if pboost['name'] in pboosts else 0
+        s += f"<td {highlight_if(stacked > 0)}>{stacked}</td>"
+
+        # Total boost
+        total_boost = mv.boost_formula(len(blocks), stacked, pboost['pct']) // 1000 / 100
+        s += f"<td {highlight_if(total_boost > 0)}>{total_boost}%</td>"
+
+        s += "</tr>"
+
     s += "</table>"
     return s
 

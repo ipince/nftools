@@ -10,7 +10,7 @@ from datetime import datetime
 from web3 import Web3
 from ens import ENS
 
-import data
+from . import data  # TODO: move to using actual modules
 
 dotenv.load_dotenv()
 

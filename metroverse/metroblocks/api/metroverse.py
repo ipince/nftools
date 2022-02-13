@@ -5,23 +5,23 @@ from collections import defaultdict
 from collections import Counter
 from datetime import datetime
 
-import api.data
+from . import data
 
 DATA_PATH = "data/"
 
 BOOSTS_DICT = {}
-PATHWAY_BOOSTS = [
-{
+PATHWAY_BOOSTS = {
+    "Railway Pathway": {
         "name": "Railway Pathway",
         "pathway": "rail",
-        "pct": 4,
+        "pct": 400,
     },
-    {
+    "River Pathway": {
         "name": "River Pathway",
         "pathway": "river",
-        "pct": 8,
+        "pct": 800,
     },
-]
+}
 
 
 def last_stake_update():
@@ -31,7 +31,7 @@ def last_stake_update():
 def load_owners():
     file = DATA_PATH + "owners_all.json"
     last_updated = datetime.fromtimestamp(os.path.getmtime(file)).strftime("%Y-%m-%d %H:%M UTC")
-    owners = api.data.load(file)
+    owners = data.load(file)
     owners = sorted_owners(owners)
     return owners, last_updated
 
@@ -204,7 +204,7 @@ def transform_block(block, buildings, public, boosts, staked):
     block['num'] = int(block['name'][7:])
     block['buildings'] = bldgs
     block['scores'] = scores
-    (bscore, tboost) = boosted_score([block], boosts)
+    (bscore, tboost) = boosted_scorev2([block], boosts)
     block['scores']['boosted'] = bscore
     block['scores']['pct'] = tboost
     block['staked'] = block['num'] in staked
@@ -226,10 +226,10 @@ def rank_blocks(blocks):
         block_dict[b['num']]['rank'] = i + 1
 
 
-def total_boostv2(blocks, boosts):
+def total_boostv2(blocks, boosts):  # TODO: add pathway boosts
     """Returns a dict of active boosts, where the value is the number of times the boost is active.
 
-    For example, a return value may be { "Safety": 2, "Education": 2 }
+    For example, a return value may be { "Safety": 2, "Education": 1 }
     """
     buildings_in_hood = []
     if blocks is not None:
@@ -238,85 +238,70 @@ def total_boostv2(blocks, boosts):
 
     buildings_counter = Counter(buildings_in_hood)
 
-    gotten = {}
+    active_boosts = {}
     for boost in boosts:
         buildings_in_boost_counter = [buildings_counter[building] for building in boost["buildings"]]
         num_stacked_boost = min(buildings_in_boost_counter)
         if num_stacked_boost == 0:
             continue
-        gotten[boost["name"]] = num_stacked_boost
+        active_boosts[boost["name"]] = num_stacked_boost
 
-    return gotten
+    return active_boosts
 
 
-# Return the boosts that these blocks qualify for (TODO: and their counts)
-def total_boost(blocks, boosts):
-    names = set()
-    if blocks is not None:  # when is it None?
-        for b in blocks:
-            names.update(b['buildings']['all'].keys())
-
-    active_bboosts = []
-    for boost in boosts:
-        if set(boost['buildings']).issubset(names):
-            active_bboosts.append(boost)
-
-    active_pboosts = []
-    for pboost in PATHWAY_BOOSTS:
+def get_active_pathway_boosts(blocks):
+    active_pboosts = {}
+    for pboost in PATHWAY_BOOSTS.values():
         count = 0
         for b in blocks:
             if b['pathway'] == pboost['pathway']:
                 count += 1
-                if count == 3:
-                    # got boost!
-                    active_pboosts.append(pboost)
-                    break
+        active = count // 3
+        if active > 0:
+            active_pboosts[pboost['name']] = active
 
-    return active_bboosts, active_pboosts
+    return active_pboosts
+
+
+def large_hood_multiplier(num_blocks):
+    HOOD_THRESHOLD = 10
+    return 1000 * HOOD_THRESHOLD // max(num_blocks, HOOD_THRESHOLD)
 
 
 def boost_formula(num_blocks, num_stacked_boost, boost_perc):
-    HOOD_THRESHOLD = 10
-
     # What we want: if a hood has 3 stacked boosts, then,
     # if the hood has <10 blocks, the boost should stack as 1+0.5+0.5^2
     # if the hood has >10 blocks,
-    spreaded_boost_multiplier = 1000 * num_stacked_boost * HOOD_THRESHOLD // max(num_blocks, HOOD_THRESHOLD)
+    stacked_boost_multiplier = num_stacked_boost * large_hood_multiplier(num_blocks)
 
-    if spreaded_boost_multiplier >= 3000:
-        spreaded_boost_multiplier = 1750
-    elif spreaded_boost_multiplier >= 2000:
-        spreaded_boost_multiplier = 1500 + (spreaded_boost_multiplier-2000)//4
-    elif spreaded_boost_multiplier > 1000:
-        spreaded_boost_multiplier = 1000 + (spreaded_boost_multiplier-1000)//2
+    if stacked_boost_multiplier >= 3000:
+        stacked_boost_multiplier = 1750
+    elif stacked_boost_multiplier >= 2000:
+        stacked_boost_multiplier = 1500 + (stacked_boost_multiplier-2000)//4
+    elif stacked_boost_multiplier > 1000:
+        stacked_boost_multiplier = 1000 + (stacked_boost_multiplier-1000)//2
 
-    return boost_perc * spreaded_boost_multiplier
+    return boost_perc * stacked_boost_multiplier
 
 
 def boosted_scorev2(blocks, boosts):
     tboost = 0
-    gotten = total_boostv2(blocks, boosts)
-    for boost in gotten:
-        print(f"checking {boost}")
+    active_bboosts = total_boostv2(blocks, boosts)
+    for boost in active_bboosts:
         theoretical_boost_perc = BOOSTS_DICT[boost]['pct']
-        actual_boost_perc = boost_formula(len(blocks), gotten[boost], theoretical_boost_perc)
+        actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost], theoretical_boost_perc)
+        tboost += actual_boost_perc
+
+    active_pboosts = get_active_pathway_boosts(blocks)
+    for boost in active_pboosts:
+        theoretical_boost_perc = PATHWAY_BOOSTS[boost]['pct']
+        actual_boost_perc = boost_formula(len(blocks), active_pboosts[boost], theoretical_boost_perc)
         tboost += actual_boost_perc
 
     score = sum(map(lambda b: b['scores']['total'], blocks))
 
     boosted_score = (score * (10000 + tboost // 1000)) // 10000
     return boosted_score, tboost // 1000
-
-
-
-# Return the total boosted score of these blocks.
-def boosted_score(blocks, boosts):
-    (bboosts, pboosts) = total_boost(blocks, boosts)
-    tboost = sum([b['pct'] for b in bboosts]) + sum([b['pct'] for b in pboosts])
-    tboost = tboost / 100
-    raw_score = sum(map(lambda b: b['scores']['total'], blocks))
-    boostedscore = round(raw_score * (1 + 1.0 * tboost / 100), 2)
-    return boostedscore, tboost
 
 
 def best_expansions(hood, blocks, boosts):
@@ -329,7 +314,7 @@ def best_expansions(hood, blocks, boosts):
         if block['num'] in hood_nums:
             continue
         hood_copy[-1] = block
-        (new_score, new_boost) = boosted_score(hood_copy, boosts)
+        (new_score, new_boost) = boosted_scorev2(hood_copy, boosts)
         options.append({'score': new_score, 'boost': new_boost, 'block': block})
 
     best_by_score = sorted(options, key=lambda o: (o['score'], o['boost']), reverse=True)
@@ -367,8 +352,8 @@ def print_owners(owners):
 # blocks, boosts, buildings, public = load_all()
 # for block in blocks:
 #     active_boosts = total_boostv2([block], boosts)
-    # if any(active_boosts.values()):
-    #    print(f"block {block['num']} has {active_boosts}")
+#     if any(active_boosts.values()):
+#        print(f"block {block['num']} has {active_boosts}")
 #
 # indeces = [168,227,282,350,484,570,764,797,806,853,917,979,1845,3665,3712,6290,9242,9922,9979,9983]
 # selected = []

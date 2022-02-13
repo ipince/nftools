@@ -109,6 +109,7 @@ application.add_url_rule('/hood', 'hood', blocks.hood)
 application.add_url_rule('/hood/<blocks>', 'hood', blocks.hood)
 
 application.add_url_rule('/buildings', 'buildings', blocks.buildings)
+application.add_url_rule('/pathways', 'pathways', blocks.pathways)
 application.add_url_rule('/ranks', 'ranks', blocks.ranks)
 application.add_url_rule('/owners', 'owners', blocks.owners)
 application.add_url_rule('/faq', 'faq', content.faq)
