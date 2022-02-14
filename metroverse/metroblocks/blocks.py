@@ -335,7 +335,9 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
     if render_stacked:
         s += """
         <th>Stacked boosts</th>
-        <th>Total Boost %<br><small style="font-weight: normal">(includes large hood multiplier)</small></th>
+        <th>"Adjusted" stacked boosts<br/><small style="font-weight: normal">(for large hoods)</small></th>
+        <th>Stacked boost multiplier<br/><small style="font-weight: normal">(after diminishing returns)</small></th>
+        <th>Earned Boost %<br><small style="font-weight: normal">(stacked multiplier * base boost)</small></th>
         """
     s += "</tr>"
 
@@ -366,7 +368,14 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
             stacked = active_bboosts[boost['name']] if boost['name'] in active_bboosts else 0
             s += f"<td {highlight_if(stacked>0)}>{stacked}</td>"
 
-            total_boost = mv.boost_formula(len(blocks), stacked, boost['pct'])//1000/100
+            # Adjusted stacked
+            adjusted_stacked = stacked * mv.large_hood_multiplier(len(blocks))
+            s += f"<td {highlight_if(adjusted_stacked>0)}>{adjusted_stacked/1000}</td>"
+
+            stacked_boost_multiplier = mv.boost_formula(len(blocks), stacked)
+            s += f"<td {highlight_if(stacked_boost_multiplier>0)}>{stacked_boost_multiplier/1000}</td>"
+
+            total_boost = (stacked_boost_multiplier * boost['pct'])//1000/100
             s += f"<td {highlight_if(total_boost>0)}>{total_boost}%</td>"
 
         s += "</tr>"
@@ -392,7 +401,9 @@ def render_pathway_boosts(blocks):
     <th>Boost % (base)</th>
     <th>Blocks with 2 of same kind</th>
     <th>Stacked boosts</th>
-    <th>Total Boost %<br><small style="font-weight: normal">(includes large hood multiplier)</small></th>
+    <th>"Adjusted" stacked boosts<br/><small style="font-weight: normal">(for large hoods)</small></th>
+    <th>Stacked boost multiplier<br/><small style="font-weight: normal">(after diminishing returns)</small></th>
+    <th>Earned Boost %<br><small style="font-weight: normal">(stacked multiplier * base boost)</small></th>
     </tr>
     """
     for pboost in mv.PATHWAY_BOOSTS.values():
@@ -419,8 +430,16 @@ def render_pathway_boosts(blocks):
         stacked = pboosts[pboost['name']] if pboost['name'] in pboosts else 0
         s += f"<td {highlight_if(stacked > 0)}>{stacked}</td>"
 
+        # Adjusted stacked
+        adjusted_stacked = stacked * mv.large_hood_multiplier(len(blocks))
+        s += f"<td {highlight_if(adjusted_stacked > 0)}>{adjusted_stacked / 1000}</td>"
+
+        # Stacked boost multiplier
+        stacked_boost_multiplier = mv.boost_formula(len(blocks), stacked)
+        s += f"<td {highlight_if(stacked_boost_multiplier > 0)}>{stacked_boost_multiplier / 1000}</td>"
+
         # Total boost
-        total_boost = mv.boost_formula(len(blocks), stacked, pboost['pct']) // 1000 / 100
+        total_boost = (mv.boost_formula(len(blocks), stacked)*pboost['pct']) // 1000 / 100
         s += f"<td {highlight_if(total_boost > 0)}>{total_boost}%</td>"
 
         s += "</tr>"

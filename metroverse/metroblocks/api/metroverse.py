@@ -267,7 +267,8 @@ def large_hood_multiplier(num_blocks):
     return 1000 * HOOD_THRESHOLD // max(num_blocks, HOOD_THRESHOLD)
 
 
-def boost_formula(num_blocks, num_stacked_boost, boost_perc):
+def boost_formula(num_blocks, num_stacked_boost):
+    """Diminishing returns"""
     # What we want: if a hood has 3 stacked boosts, then,
     # if the hood has <10 blocks, the boost should stack as 1+0.5+0.5^2
     # if the hood has >10 blocks,
@@ -280,7 +281,7 @@ def boost_formula(num_blocks, num_stacked_boost, boost_perc):
     elif stacked_boost_multiplier > 1000:
         stacked_boost_multiplier = 1000 + (stacked_boost_multiplier-1000)//2
 
-    return boost_perc * stacked_boost_multiplier
+    return stacked_boost_multiplier
 
 
 def boosted_scorev2(blocks, boosts):
@@ -288,13 +289,13 @@ def boosted_scorev2(blocks, boosts):
     active_bboosts = total_boostv2(blocks, boosts)
     for boost in active_bboosts:
         theoretical_boost_perc = BOOSTS_DICT[boost]['pct']
-        actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost], theoretical_boost_perc)
+        actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost]) * theoretical_boost_perc
         tboost += actual_boost_perc
 
     active_pboosts = get_active_pathway_boosts(blocks)
     for boost in active_pboosts:
         theoretical_boost_perc = PATHWAY_BOOSTS[boost]['pct']
-        actual_boost_perc = boost_formula(len(blocks), active_pboosts[boost], theoretical_boost_perc)
+        actual_boost_perc = boost_formula(len(blocks), active_pboosts[boost]) * theoretical_boost_perc
         tboost += actual_boost_perc
 
     score = sum(map(lambda b: b['scores']['total'], blocks))
