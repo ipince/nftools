@@ -30,8 +30,7 @@ def last_stake_update():
 
 def load_owners():
     file = DATA_PATH + "owners_all.json"
-    last_updated = datetime.fromtimestamp(os.path.getmtime(file)).strftime("%Y-%m-%d %H:%M UTC")
-    owners = data.load(file)
+    owners, last_updated = data.load(file)
     owners = sorted_owners(owners)
     return owners, last_updated
 
@@ -324,6 +323,7 @@ def best_expansions(hood, blocks, boosts):
 
 
 def sorted_owners(owners):
+    """Return the owners list ordered by number of blocks, and then min block #"""
     sorted_keys = sorted(owners.keys(), key=lambda o: (-len(owners[o]), min(owners[o])))
     sorted_owners = [(k, sorted(list(owners[k]))) for k in sorted_keys]
     return sorted_owners

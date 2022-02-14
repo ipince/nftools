@@ -76,7 +76,6 @@ def get_vault_transactions(endblock=99999999):
 
 
 def get_staked_owners(owners, staked):
-    print(ETHERSCAN_KEY)
     print(f"Finding owners for {len(staked)} staked blocks...")
     unresolved = defaultdict(set)
     seen = set()
@@ -132,6 +131,12 @@ def get_immediate_stakers(owners, unresolved):
 
 
 def get_all_owners():
+    """Returns a dict from owner wallet to list of Block IDs
+
+    Updates the ownership information by querying the blockchain.
+
+    Saves data into disk.
+    """
     all_blocks = set([i+1 for i in range(10000)])
     staked = refresh_staked_blocks()
     unstaked = all_blocks.difference(staked)
@@ -147,6 +152,7 @@ def get_all_owners():
     # 3) Get owners of unstaked blocks by calling Token contract directly.
     owners = get_unstaked_owners(owners, unstaked)
     save_owners(owners, 'data/owners_all.json')
+    return owners
 
 
 def save_owners(owners, file):
