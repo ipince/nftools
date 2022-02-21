@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections import Counter
 from datetime import datetime
 
-from . import data
+from engine import data
 
 DATA_PATH = "data/"
 

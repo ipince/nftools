@@ -1,8 +1,9 @@
-import content
-import api.metroverse as mv
 import traceback
 
-from api import data
+from engine import metroverse as mv
+from engine import data
+
+from pages import content
 
 instructions = '''
 <h1>Block Explorer</h1>

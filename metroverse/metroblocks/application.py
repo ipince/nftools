@@ -1,10 +1,9 @@
 from flask import Flask, request
 
-import blocks
-import content
+from pages import blocks, content
 import json
 
-from api import blockchain
+from engine import blockchain
 from api import api
 
 # EB looks for an 'application' callable by default.
@@ -39,19 +38,6 @@ def refresh_staked_blocks():
     # TODO: protect this somehow!
     num = blockchain.refresh_staked_blocks()
     return f"there are {num} staked blocks"
-
-
-@application.route('/read')
-def read():
-    with open('data/test.txt', 'r') as f:
-        return f.read()
-
-
-@application.route('/write/<data>')
-def write(data):
-    with open('data/test.txt', 'w') as f:
-        f.write(data)
-        return "written"
 
 
 application.add_url_rule('/b/<block_number>', 'block', blocks.get_block)
