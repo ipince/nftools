@@ -1,13 +1,15 @@
-from flask import Flask
+from flask import Flask, request
 
 import blocks
 import content
 import json
 
 from api import blockchain
+from api import api
 
 # EB looks for an 'application' callable by default.
 application = Flask(__name__)
+application.url_map.strict_slashes = False
 
 
 @application.route('/')
@@ -15,77 +17,26 @@ def index():
     return blocks.index()
 
 
-@application.route('/api/hood/<blocknums>')
-def api_hood(blocknums):
-    # Return some dummy data for frontend development.
-    data = {
-        "blocks": [
-            {
-                "num": 1,
-                "name": "Block #1",
-                "score": 123,
-                "buildings": [
-                    {
-                        "name": "Hospital",
-                        "type": "Public",
-                    },  # more...
-                ],
-                "pathway": None,
-            },
-            {
-                "num": 2,
-                "name": "Block #2",
-                "score": 130,
-                "buildings": [
-                    {
-                        "name": "Fire Station",
-                        "type": "Public",
-                    },  # more...
-                ],
-                "pathway": "Railway",
-            },  # more...
-        ],
-        "building_boosts": [
-            {
-                "name": "Safety",
-                "enabled": True,
-                "pct": 5,
-                "buildings": [
-                    {
-                        "name": "Hospital",
-                        "blocks": [1],
-                    },
-                    {
-                        "name": "Police Station",
-                        "blocks": [],
-                    },
-                    {
-                        "name": "Fire Station",
-                        "blocks": [1, 2],
-                    }
-                ]
-            },  # more...
-        ],
-        "pathway_boosts": [
-            {
-                "name": "Railway Pathway",
-                "enabled": True,
-                "pct": 4,
-                "blocks": [2],
-            },
-            {
-                "name": "River Pathway",
-                "enabled": False,
-                "pct": 8,
-                "blocks": [],
-            },
-        ]
-    }
-    return json.dumps(data, indent=2)
+@application.route('/api/hood', methods=["GET", "POST"])
+@application.route('/api/hood/<blocknums>', methods=["GET", "POST"])
+def api_hood(blocknums=None):
+    if blocknums:
+        # Parse from query string
+        blocknums = list(map(lambda s: int(s.strip()), blocknums.split(",")))
+        pass
+    else:
+        try:
+            blocknums = request.get_json(force=True)
+        except Exception:
+            return json.dumps({"error": "Unable to parse input. It should be valid JSON and look like '[1, 2, 3]'"})
+
+    # TODO: validate input is numbers.
+    return api.hood(blocknums)
 
 
 @application.route('/refresh-staked-blocks')
 def refresh_staked_blocks():
+    # TODO: protect this somehow!
     num = blockchain.refresh_staked_blocks()
     return f"there are {num} staked blocks"
 

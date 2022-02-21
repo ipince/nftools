@@ -9,7 +9,7 @@ from . import data
 
 DATA_PATH = "data/"
 
-BOOSTS_DICT = {}
+BOOSTS_DICT = {}  # TODO: remove
 PATHWAY_BOOSTS = {
     "Railway Pathway": {
         "name": "Railway Pathway",
@@ -36,6 +36,7 @@ def load_owners():
 
 
 def load_all():
+    print("Loading game data...")
     (blocks, buildings, public, boosts, staked) = load_data()
     global BOOSTS_DICT
     for boost in boosts:
@@ -350,7 +351,6 @@ def print_owners(owners):
 # 10-block low-end: 7213,4395,2800,2538,8411,4527,484,9242,2542,9963 => 2848
 # 10-block high-end: 5527,8444,6188,8565,9124,1900,3678,1677,9977,9979 => 3523
 
-# blocks, boosts, buildings, public = load_all()
 # for block in blocks:
 #     active_boosts = total_boostv2([block], boosts)
 #     if any(active_boosts.values()):
@@ -381,3 +381,6 @@ def print_owners(owners):
 
 # print(find(blocks, 'Wildlife Waystation'))
 # compute_score(blocks[3], buildings, public)
+
+# Load the game data needed for this module.
+BLOCKS, BOOSTS, BUILDINGS, PUBLIC = load_all()
