@@ -2,6 +2,7 @@
 title = '''
 <html><head>
 <title>Metroblocks</title>
+<meta name="robots" content="nofollow">
 <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 <script src="/static/donate.js" defer></script>
 <link rel="stylesheet" type="text/css" href="/static/style.css">
