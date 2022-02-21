@@ -6,6 +6,7 @@ title = '''
 <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 <script src="/static/donate.js" defer></script>
 <link rel="stylesheet" type="text/css" href="/static/style.css">
+<link rel="icon" type="image/x-icon" href="/static/images/favicon.png">
 </head>
 <body>
 '''
