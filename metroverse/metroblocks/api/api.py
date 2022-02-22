@@ -1,13 +1,17 @@
-from engine import metroverse as mv
 import json
 
+from engine import metroverse as mv
 
-def blocks_from_indeces(indeces, all_blocks):
-    return list(filter(lambda b: b['num'] in indeces, all_blocks))
+
+def blocks_from_indeces(indeces, all_blocks=None):
+    if not all_blocks:
+        collection = mv.BLOCKS
+    return list(filter(lambda b: b['num'] in indeces, collection))
 
 
 def hood(blocknums):
-    blocks = blocks_from_indeces(blocknums, mv.BLOCKS)
+    # TODO: validate?
+    blocks = blocks_from_indeces(blocknums)
 
     lhm = mv.large_hood_multiplier(len(blocknums))
     active_bboosts = mv.total_boostv2(blocks, mv.BOOSTS)
@@ -28,7 +32,6 @@ def hood(blocknums):
             "base_boost_bps": bboost["pct"],
             "num_stacked": stacked,
             "progress_to_next_stack": 0,  # TODO: implement
-            "large_hood_multiplier": lhm,
             "adjusted_num_stacked": adjusted_stack,
             "stacked_boost_multiplier": stacked_boost_multipler,
             "earned_boost_bps": earned_boost_bps,
@@ -43,7 +46,6 @@ def hood(blocknums):
             "base_boost_bps": pboost["pct"],
             "num_stacked": stacked,
             "progress_to_next_stack": 0,  # TODO: implement
-            "large_hood_multiplier": lhm,
             "adjusted_num_stacked": adjusted_stack,
             "stacked_boost_multiplier": stacked_boost_multipler,
             "earned_boost_bps": earned_boost_bps,
@@ -55,8 +57,10 @@ def hood(blocknums):
         "earned_boost_bps": total_boost,
         "blocks": [{"num": i, "collection": "genesis"} for i in blocknums],
         "boosts": boosts,
+        "large_hood_multiplier": lhm,
     }
-    return as_json(data)
+    return data
+    # return as_json(data)
 
 
 def as_json(object):
