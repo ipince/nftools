@@ -9,14 +9,13 @@ from engine import data
 
 # globals loaded later, but needed for code to "compile"
 BLOCKS = None
-BOOSTS = None
+BOOSTS = None  # List of boosts
 BUILDINGS = None
 PUBLIC = None
 
 HOOD_THRESHOLD = 10
 DATA_PATH = "data/"
 
-BOOSTS_DICT = {}  # TODO: remove
 PATHWAY_BOOSTS = {
     "Railway Pathway": {
         "name": "Railway Pathway",
@@ -47,11 +46,6 @@ def load_all():
     (blocks, buildings, public, boosts, staked) = load_data()
     global BOOSTS, BLOCKS, BUILDINGS, PUBLIC
     BOOSTS = boosts
-
-    global BOOSTS_DICT
-    for boost in boosts:
-        BOOSTS_DICT[boost["name"]] = boost
-        BOOSTS_DICT[boost["name"]]["pct"] *= 100
 
     (buildings, public) = transform_buildings(buildings, public, boosts)
     blocks = transform(blocks, buildings, public, boosts, staked)
@@ -257,10 +251,12 @@ def boost_formula(num_blocks, num_stacked_boost):
 def hood_boost(blocks):
     tboost = 0
     active_bboosts = active_boosts(blocks)
-    for boost in active_bboosts:
-        theoretical_boost_perc = BOOSTS_DICT[boost]['pct']
-        actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost]) * theoretical_boost_perc
-        tboost += actual_boost_perc
+    for boost_name in active_bboosts:
+        for candidate in BOOSTS:  # TODO: use a dict instead
+            if candidate["name"] == boost_name:
+                theoretical_boost_perc = candidate["bps"]
+                actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost_name]) * theoretical_boost_perc
+                tboost += actual_boost_perc
 
     active_pboosts = get_active_pathway_boosts(blocks)
     for boost in active_pboosts:
