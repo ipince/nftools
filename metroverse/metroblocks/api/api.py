@@ -56,9 +56,9 @@ def hood(blocknums):
 
 
 # TODO: implement proper pagination
-def hood_expansions(blocknums, exclude_staked=False, limit=100):
+def hood_expansions(blocknums, include_staked=False, limit=100):
     blocks = blocks_from_indeces(blocknums)
-    (byscore, byboost) = mv.best_expansions(blocks)
+    (byscore, byboost) = mv.best_expansions(blocks, include_staked=include_staked)
 
     # Apply limits
     byscore = byscore[:limit]

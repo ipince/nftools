@@ -255,7 +255,7 @@ def hood_boost(blocks):
     return boosted_score, tboost // 1000
 
 
-def best_expansions(hood):
+def best_expansions(hood, include_staked=False):
     """Returns two sorted lists containing the best expansions for a hood.
 
     "Best" is subjective. This function returns the best single new block
@@ -275,6 +275,8 @@ def best_expansions(hood):
     options = []
     for block in BLOCKS:
         if block['num'] in hood_nums:
+            continue
+        if not include_staked and block["staked"]:
             continue
         hood_copy[-1] = block
         (new_score, new_boost) = hood_boost(hood_copy)

@@ -1,5 +1,7 @@
 import traceback
 
+from flask import request
+
 from api import api
 
 from . import blocks as blockspage
@@ -14,6 +16,8 @@ def hood(blocks=None):
     """Renders the Hood Simulator page"""
     if blocks is None or blocks == "":
         return content.with_body(HOOD_LANDING, 'hoods')
+
+    include_staked = request.args.get("staked", default=False, type=bool)
     try:
         # TODO: Validate input
         indeces = list(map(lambda s: int(s.strip()), blocks.split(",")))
@@ -53,8 +57,8 @@ def hood(blocks=None):
         """
 
         # Expansions
-        expansions = api.hood_expansions(indeces)
-        body += render_expansions(indeces, expansions, boosted_score, last_stake_update)
+        expansions = api.hood_expansions(indeces, include_staked=include_staked)
+        body += render_expansions(indeces, expansions, boosted_score, last_stake_update, include_staked)
 
         # Blocks
         for b in blocks:
@@ -69,11 +73,12 @@ def hood(blocks=None):
             'hoods')
 
 
-def render_expansions(indeces, expansions, boosted_score, last_stake_update):
+def render_expansions(indeces, expansions, boosted_score, last_stake_update, staked_included):
     byscore = expansions["by_score"]
     byboost = expansions["by_boost"]
-    body = """
+    body = f"""
     <h2>Expansions</h2>
+    <b><a href={"?" if staked_included else "?staked=1"}>{"Exclude " if staked_included else "Include "} staked</a></b><br/><br/>
     This is an ordered list of which blocks will best expand your current hood. We consider two
     ways to optimize: by score and by boost. If you only optimize by score, then the list will
     most likely be topped by blocks that have a large total score. But there might be some great blocks
