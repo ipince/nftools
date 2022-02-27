@@ -22,25 +22,25 @@ def hood(blocknums):
     blocks = blocks_from_indeces(blocknums)
 
     lhm = mv.large_hood_multiplier(len(blocknums))
-    active_bboosts = mv.active_boosts(blocks)
+    active_boosts = mv.active_boosts(blocks)
 
     # TODO: note, this is re-doing the same work. Make it more efficient.
     boosted_score, total_boost = mv.hood_boost(blocks)
 
     boosts = []
-    # TODO: merge with pathway boosts
     for bboost in mv.BOOSTS:
-        stacked = active_bboosts[bboost['name']] if bboost['name'] in active_bboosts else 0
+        stacked = active_boosts[bboost['name']]["full"]
+        partial = active_boosts[bboost['name']]["partial"]
         adjusted_stack = stacked * lhm
-        stacked_boost_multipler = mv.boost_formula(len(blocks), stacked)
-        earned_boost_bps = (stacked_boost_multipler * bboost['bps'])//1000  # undo multiplier
+        stacked_boost_multiplier = mv.boost_formula(len(blocks), stacked)
+        earned_boost_bps = (stacked_boost_multiplier * bboost['bps'])//1000  # undo multiplier
         boosts.append({
             "name": bboost["name"],
             "base_boost_bps": bboost["bps"],
             "num_stacked": stacked,
-            "progress_to_next_stack": 0,  # TODO: implement
+            "progress_to_next_stack": partial,
             "adjusted_num_stacked": adjusted_stack,
-            "stacked_boost_multiplier": stacked_boost_multipler,
+            "stacked_boost_multiplier": stacked_boost_multiplier,
             "earned_boost_bps": earned_boost_bps,
         })
 

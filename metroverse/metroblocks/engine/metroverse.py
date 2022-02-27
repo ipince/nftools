@@ -179,10 +179,14 @@ def rank_blocks(blocks):
         block_dict[b['num']]['rank'] = i + 1
 
 
-def active_boosts(blocks):  # TODO: add pathway boosts
+def active_boosts(blocks):
     """Returns a dict of active boosts, where the value is the number of times the boost is active.
 
-    For example, a return value may be { "Safety": 2, "Education": 1 }
+    For example, a return value may be:
+    {
+        "Safety": { "full": 2, "partial": 1 },
+        "Education": { "full": 1, "partial": 0 },
+    }
     """
     buildings_in_hood = []
     if blocks is not None:
@@ -190,21 +194,28 @@ def active_boosts(blocks):  # TODO: add pathway boosts
             buildings_in_hood.extend(list(b['buildings']['all'].keys()))
             buildings_in_hood.append(b["pathway"])
 
-    building_counts = Counter(buildings_in_hood)
+    building_counts = Counter(buildings_in_hood)  # e.g. {"Hospital": 3}
 
-    active_boosts = {}
+    actives = {}
     for boost in BOOSTS:
-        building_stacks = []
-        for building in boost["buildings"]:
-            if building["count"] > 0:
-                building_stacks.append(building_counts[building["name"]] // building["count"])
-        # TODO: implement partials...
-        num_stacked_boost = min(building_stacks)
-        if num_stacked_boost == 0:
-            continue
-        active_boosts[boost["name"]] = num_stacked_boost
+        building_stacks = [building_counts[building["name"]] // building["count"]
+                           for building in boost["buildings"] if building["count"] > 0]
+        num_stacked_boost = min(building_stacks)  # looks like [2, 1, 0]
 
-    return active_boosts
+        remainders = [building_counts[building["name"]] - num_stacked_boost * building["count"]
+                      for building in boost["buildings"] if building["count"] > 0]
+
+        if len(remainders) == 1:  # assumption: only 1 building has count > 1
+            partial = remainders[0]
+        else:
+            partial = sum(1 if count >= 1 else 0 for count in remainders)
+
+        actives[boost["name"]] = {
+            "full": num_stacked_boost,
+            "partial": partial,
+        }
+
+    return actives
 
 
 def large_hood_multiplier(num_blocks):
@@ -230,12 +241,12 @@ def boost_formula(num_blocks, num_stacked_boost):
 
 def hood_boost(blocks):
     tboost = 0
-    active_bboosts = active_boosts(blocks)  # TODO: rename
-    for boost_name in active_bboosts:
+    actives = active_boosts(blocks)
+    for boost_name in actives:
         for candidate in BOOSTS:  # TODO: use a dict instead
             if candidate["name"] == boost_name:
                 theoretical_boost_perc = candidate["bps"]
-                actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost_name]) * theoretical_boost_perc
+                actual_boost_perc = boost_formula(len(blocks), actives[boost_name]["full"]) * theoretical_boost_perc
                 tboost += actual_boost_perc
 
     score = sum(map(lambda b: b['scores']['total'], blocks))

@@ -4,7 +4,7 @@ from engine import metroverse as mv
 
 
 def render_boosts(blocks=None, highlight=False, render_stacked=False):
-    active_bboosts = mv.active_boosts(blocks)
+    active_boosts = mv.active_boosts(blocks)
 
     names = set()
     if blocks is not None:
@@ -66,7 +66,7 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
             s += "</td>"
 
         if render_stacked:
-            stacked = active_bboosts[boost['name']] if boost['name'] in active_bboosts else 0
+            stacked = active_boosts[boost['name']]["full"]
             s += f"<td {util.highlight_if(stacked>0)}>{stacked}</td>"
 
             if large_hood:
