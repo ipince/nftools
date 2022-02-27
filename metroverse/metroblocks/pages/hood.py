@@ -1,7 +1,5 @@
 import traceback
 
-# TODO: replace with api import
-from engine import metroverse as mv
 from api import api
 
 from . import blocks as blockspage
@@ -30,7 +28,7 @@ def hood(blocks=None):
         score = hood_data["raw_score"]
         lhm = hood_data["large_hood_multiplier"]
 
-        last_stake_update = mv.last_stake_update()
+        last_stake_update = api.last_stake_update()
 
         # Title
         names = [b['name'] for b in blocks]
@@ -55,8 +53,8 @@ def hood(blocks=None):
         """
 
         # Expansions
-        (byscore, byboost) = mv.best_expansions(blocks)
-        body += render_expansions(indeces, byscore, byboost, boosted_score, last_stake_update)
+        expansions = api.hood_expansions(indeces)
+        body += render_expansions(indeces, expansions, boosted_score, last_stake_update)
 
         # Blocks
         for b in blocks:
@@ -71,7 +69,9 @@ def hood(blocks=None):
             'hoods')
 
 
-def render_expansions(indeces, byscore, byboost, boosted_score, last_stake_update):
+def render_expansions(indeces, expansions, boosted_score, last_stake_update):
+    byscore = expansions["by_score"]
+    byboost = expansions["by_boost"]
     body = """
     <h2>Expansions</h2>
     This is an ordered list of which blocks will best expand your current hood. We consider two

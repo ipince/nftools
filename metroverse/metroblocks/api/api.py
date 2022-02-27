@@ -79,3 +79,7 @@ def hood_expansions(blocknums, exclude_staked=False, limit=100):
     }
 
     return data
+
+
+def last_stake_update():
+    return mv.last_stake_update()
