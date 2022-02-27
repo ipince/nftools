@@ -40,7 +40,7 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
 
     for boost in mv.BOOSTS:
         s += f"<tr><td>{boost['name']}</td>"
-        s += f"<td>{boost['pct']//100}%</td>"
+        s += f"<td>{boost['pct']}%</td>"
 
         for b in boost['buildings']:
             # which blocks have building b?
@@ -73,7 +73,7 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
             stacked_boost_multiplier = mv.boost_formula(len(blocks), stacked)
             s += f"<td {util.highlight_if(stacked_boost_multiplier>0)}>{stacked_boost_multiplier/1000}</td>"
 
-            total_boost = (stacked_boost_multiplier * boost['pct'])//1000/100
+            total_boost = (stacked_boost_multiplier * boost['bps'])//1000/100
             s += f"<td {util.highlight_if(total_boost>0)}><b>{total_boost}%</b></td>"
 
         s += "</tr>"

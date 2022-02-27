@@ -34,10 +34,10 @@ def hood(blocknums):
         stacked = active_bboosts[bboost['name']] if bboost['name'] in active_bboosts else 0
         adjusted_stack = stacked * lhm
         stacked_boost_multipler = mv.boost_formula(len(blocks), stacked)
-        earned_boost_bps = (stacked_boost_multipler * bboost['pct'])//1000  # undo multiplier
+        earned_boost_bps = (stacked_boost_multipler * bboost['bps'])//1000  # undo multiplier
         boosts.append({
             "name": bboost["name"],
-            "base_boost_bps": bboost["pct"],
+            "base_boost_bps": bboost["bps"],
             "num_stacked": stacked,
             "progress_to_next_stack": 0,  # TODO: implement
             "adjusted_num_stacked": adjusted_stack,

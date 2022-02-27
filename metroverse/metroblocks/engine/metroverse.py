@@ -170,7 +170,7 @@ def transform_block(block, buildings, public, boosts, staked):
     block['scores'] = scores
     (bscore, tboost) = hood_boost([block])
     block['scores']['boosted'] = bscore
-    block['scores']['pct'] = tboost
+    block['scores']['pct'] = tboost/100
     block['staked'] = block['num'] in staked
 
     return block

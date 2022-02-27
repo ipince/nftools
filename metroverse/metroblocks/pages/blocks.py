@@ -46,7 +46,7 @@ def render_block(block):
             s = f"        {build['name']} (score {build['score']}, weight {build['weight']}) "
 
             if 'boost_name' in build:
-                s += f" <b>[{build['boost_name']} - {build['pct']//100}%]</b>"
+                s += f" <b>[{build['boost_name']} - {build['pct']}%]</b>"
             bldg_strs.append(s + "\n")
         strs.append(bldg_strs)
 
@@ -54,7 +54,7 @@ def render_block(block):
     for pub in block['buildings']['pub'].values():
         s = f"        {pub['name']}"
         if 'boost_name' in pub:
-            s += f" <b>[{pub['boost_name']} - {pub['pct']//100}%]</b>"
+            s += f" <b>[{pub['boost_name']} - {pub['pct']}%]</b>"
         pubs.append(s)
 
     bnum = block['num']
