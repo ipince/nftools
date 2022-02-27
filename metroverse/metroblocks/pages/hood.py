@@ -9,6 +9,8 @@ from . import boost
 from . import content
 from . import util
 
+HOOD_SIZE_LIMIT = 150
+
 
 def hood(blocks=None):
     """Renders the Hood Simulator page"""
@@ -17,8 +19,8 @@ def hood(blocks=None):
     try:
         # TODO: Validate input
         indeces = list(map(lambda s: int(s.strip()), blocks.split(",")))
-        if len(indeces) > 120:
-            return content.with_body("Please limit your input to 120 blocks", 'hoods')
+        if len(indeces) > HOOD_SIZE_LIMIT:
+            return content.with_body(f"Please limit your input to {HOOD_SIZE_LIMIT} blocks", 'hoods')
 
         blocks = api.blocks_from_indeces(indeces)
         hood_data = api.hood(indeces)
