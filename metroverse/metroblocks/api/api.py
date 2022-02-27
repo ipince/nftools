@@ -9,16 +9,26 @@ def blocks_from_indeces(indeces, all_blocks=None):
     return list(filter(lambda b: b['num'] in indeces, collection))
 
 
+def all_blocks():
+    # Maybe transform these in order to hide the internal and external object.
+    return mv.BLOCKS
+
+
 def hood(blocknums):
+    """Returns the Hood formed by the block numbers passed in.
+
+    The Hood includes the total scores, as well as information about all the
+    hood boosts that are active.
+    """
     # TODO: validate?
     blocks = blocks_from_indeces(blocknums)
 
     lhm = mv.large_hood_multiplier(len(blocknums))
-    active_bboosts = mv.total_boostv2(blocks, mv.BOOSTS)
+    active_bboosts = mv.active_boosts(blocks)
     active_pboosts = mv.get_active_pathway_boosts(blocks)  # TODO
 
     # TODO: note, this is re-doing the same work. Make it more efficient.
-    boosted_score, total_boost = mv.boosted_scorev2(blocks, mv.BOOSTS)
+    boosted_score, total_boost = mv.hood_boost(blocks)
 
     boosts = []
     # TODO: merge with pathway boosts

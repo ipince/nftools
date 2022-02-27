@@ -4,9 +4,6 @@ from engine import metroverse as mv
 
 
 def update_hoods_metadata(refresh_owners=False):
-    print("Loading game data")
-    blocks, boosts, buildings, public = mv.load_all()
-
     if refresh_owners:
         print("Refreshing ownership data from the blockchain")
         blockchain.get_all_owners()
@@ -16,8 +13,8 @@ def update_hoods_metadata(refresh_owners=False):
     print("Calculating hood size/score/boost")
     hoods = {}
     for owner, indeces in owners.items():
-        hood_blocks = list(filter(lambda b: b['num'] in indeces, blocks))
-        tscore, tboost = mv.boosted_scorev2(hood_blocks, boosts)
+        hood_blocks = list(filter(lambda b: b['num'] in indeces, mv.BLOCKS))
+        tscore, tboost = mv.hood_boost(hood_blocks)
 
         hoods[owner] = {}
         hoods[owner]['blocks'] = indeces

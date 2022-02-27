@@ -7,6 +7,13 @@ from datetime import datetime
 
 from engine import data
 
+# globals loaded later, but needed for code to "compile"
+BLOCKS = None
+BOOSTS = None
+BUILDINGS = None
+PUBLIC = None
+
+HOOD_THRESHOLD = 10
 DATA_PATH = "data/"
 
 BOOSTS_DICT = {}  # TODO: remove
@@ -38,6 +45,9 @@ def load_owners():
 def load_all():
     print("Loading game data...")
     (blocks, buildings, public, boosts, staked) = load_data()
+    global BOOSTS, BLOCKS, BUILDINGS, PUBLIC
+    BOOSTS = boosts
+
     global BOOSTS_DICT
     for boost in boosts:
         BOOSTS_DICT[boost["name"]] = boost
@@ -45,10 +55,13 @@ def load_all():
 
     (buildings, public) = transform_buildings(buildings, public, boosts)
     blocks = transform(blocks, buildings, public, boosts, staked)
-    buildings_by_rarity(blocks, buildings, public)
     rank_blocks(blocks)
+    buildings_by_rarity(blocks, buildings, public)
 
-    return blocks, boosts, buildings, public
+    global BLOCKS, BUILDINGS, PUBLIC
+    BLOCKS = blocks
+    BUILDINGS = buildings
+    PUBLIC = public
 
 
 def load_data():
@@ -72,28 +85,6 @@ def read_json(path):
         return data
 
 
-def find(blocks, bname):
-    names = []
-    for b in blocks:
-        if bname in b['buildings']['all']:
-            names.append(b['name'])
-    return names
-
-
-def has_building(block, building):
-    for trait in block['attributes']:
-        if trait['value'] == building:
-            return True
-    return False
-
-
-def score(block):
-    for trait in block['attributes']:
-        if trait['trait_type'] == 'Score: Total':
-            return trait['value']
-    return False
-
-
 def buildings_by_rarity(all_blocks, buildings, public):
     all_buildings = buildings.copy()
     all_buildings.update(public)
@@ -112,27 +103,6 @@ def buildings_by_rarity(all_blocks, buildings, public):
 
     sorted_buildings = sorted(all_buildings, key=lambda b: bcounts[b])
     return sorted_buildings, bcounts, counts
-
-
-def compute_score(block):
-    scores = defaultdict(float)
-    boosts = defaultdict(int)
-    for building in block['buildings']['all'].values():
-        if building['type'] == 'public':
-            boosts['res'] += building['res_boost']
-            boosts['com'] += building['com_boost']
-            boosts['ind'] += building['ind_boost']
-        else:
-            scores[building['type']] += building['score']
-
-    print(scores)
-    print(boosts)
-
-    scores['residential'] = scores['residential'] * (1 + 1.0 * boosts['res'] / 100)
-    scores['commercial'] = scores['commercial'] * (1 + 1.0 * boosts['com'] / 100)
-    scores['industrial'] = scores['industrial'] * (1 + 1.0 * boosts['ind'] / 100)
-
-    print(scores)
 
 
 def transform_buildings(buildings, public, boosts):
@@ -204,14 +174,14 @@ def transform_block(block, buildings, public, boosts, staked):
     block['num'] = int(block['name'][7:])
     block['buildings'] = bldgs
     block['scores'] = scores
-    (bscore, tboost) = boosted_scorev2([block], boosts)
+    (bscore, tboost) = hood_boost([block])
     block['scores']['boosted'] = bscore
     block['scores']['pct'] = tboost
     block['staked'] = block['num'] in staked
 
     return block
 
-
+# TODO: how is this being used? wtf
 def rank_blocks(blocks):
     block_dict = {}
     for b in blocks:
@@ -226,7 +196,7 @@ def rank_blocks(blocks):
         block_dict[b['num']]['rank'] = i + 1
 
 
-def total_boostv2(blocks, boosts):  # TODO: add pathway boosts
+def active_boosts(blocks):  # TODO: add pathway boosts
     """Returns a dict of active boosts, where the value is the number of times the boost is active.
 
     For example, a return value may be { "Safety": 2, "Education": 1 }
@@ -239,7 +209,7 @@ def total_boostv2(blocks, boosts):  # TODO: add pathway boosts
     buildings_counter = Counter(buildings_in_hood)
 
     active_boosts = {}
-    for boost in boosts:
+    for boost in BOOSTS:
         buildings_in_boost_counter = [buildings_counter[building] for building in boost["buildings"]]
         num_stacked_boost = min(buildings_in_boost_counter)
         if num_stacked_boost == 0:
@@ -249,7 +219,7 @@ def total_boostv2(blocks, boosts):  # TODO: add pathway boosts
     return active_boosts
 
 
-def get_active_pathway_boosts(blocks):
+def get_active_pathway_boosts(blocks):  # TODO: MERGE
     active_pboosts = {}
     for pboost in PATHWAY_BOOSTS.values():
         count = 0
@@ -264,7 +234,6 @@ def get_active_pathway_boosts(blocks):
 
 
 def large_hood_multiplier(num_blocks):
-    HOOD_THRESHOLD = 10
     return 1000 * HOOD_THRESHOLD // max(num_blocks, HOOD_THRESHOLD)
 
 
@@ -285,9 +254,9 @@ def boost_formula(num_blocks, num_stacked_boost):
     return stacked_boost_multiplier
 
 
-def boosted_scorev2(blocks, boosts):
+def hood_boost(blocks):
     tboost = 0
-    active_bboosts = total_boostv2(blocks, boosts)
+    active_bboosts = active_boosts(blocks)
     for boost in active_bboosts:
         theoretical_boost_perc = BOOSTS_DICT[boost]['pct']
         actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost]) * theoretical_boost_perc
@@ -305,17 +274,17 @@ def boosted_scorev2(blocks, boosts):
     return boosted_score, tboost // 1000
 
 
-def best_expansions(hood, blocks, boosts):
+def best_expansions(hood):
     # brute force: try adding every other block and calculate!
     hood_nums = [b['num'] for b in hood]
     hood_copy = hood.copy()
     hood_copy.append(None)  # optimization: pre-allocate and reuse array
     options = []
-    for block in blocks:
+    for block in BLOCKS:
         if block['num'] in hood_nums:
             continue
         hood_copy[-1] = block
-        (new_score, new_boost) = boosted_scorev2(hood_copy, boosts)
+        (new_score, new_boost) = hood_boost(hood_copy)
         options.append({'score': new_score, 'boost': new_boost, 'block': block})
 
     best_by_score = sorted(options, key=lambda o: (o['score'], o['boost']), reverse=True)
@@ -339,48 +308,49 @@ def print_owners(owners):
     print(f"Found {len(owners)} distinct owners for {total} BLOCKS")
 
 
-# low scores low boosts (10): 543,689,799,1996,2894,3317,4395,4691,4886,7213
-# high scores low boosts (10):
-
-
-# low scores with no boosts: 7213,4395,2800,2538,8411,4527,5527,9242,2542,8444
-# high scores with no boosts: 6188,8565,9124,1900,3678,764,484,1677,7229,9804
-# transport boost: 9977, 9979, 9983
-
-# 20-block with 4-transport boost: 7213,4395,2800,2538,8411,4527,5527,9242,2542,8444,6188,8565,9124,1900,3678,1677,484,9977,9979,9963 => 6399
-# 10-block low-end: 7213,4395,2800,2538,8411,4527,484,9242,2542,9963 => 2848
-# 10-block high-end: 5527,8444,6188,8565,9124,1900,3678,1677,9977,9979 => 3523
-
-# for block in blocks:
-#     active_boosts = total_boostv2([block], boosts)
-#     if any(active_boosts.values()):
-#        print(f"block {block['num']} has {active_boosts}")
-#
-# indeces = [168,227,282,350,484,570,764,797,806,853,917,979,1845,3665,3712,6290,9242,9922,9979,9983]
-# selected = []
-# for i in indeces:
-#     selected.append(blocks[i-1])
-# s = sorted(selected, key=lambda b: b['scores']['total'])
-# print([b['num'] for b in s])
-
-# blocks = read_json("data/all_blocks.json")
-# print(len(blocks))
-# i = 0
-# for block in blocks:
-#    if i > 200:
-#        break
-#    for entity in block['entities']:
-#        etype = entity['entity_type']
-#        if "pathway" in etype['zone'] and "-x-" in etype['name']:
-#            print(f"{block['name']}: zone: {etype['zone']} | name: {etype['name']}")
-#    i += 1
-
-# (blocks, boosts, buildings, public) = load_all()
-# (byscore, byboost) = best_expansions(blocks[0:2], blocks, boosts)
-# print(byscore[:2])
-
-# print(find(blocks, 'Wildlife Waystation'))
-# compute_score(blocks[3], buildings, public)
-
 # Load the game data needed for this module.
-BLOCKS, BOOSTS, BUILDINGS, PUBLIC = load_all()
+load_all()
+
+
+# Unused, but useful stuff below
+def find(blocks, bname):
+    names = []
+    for b in blocks:
+        if bname in b['buildings']['all']:
+            names.append(b['name'])
+    return names
+
+
+def has_building(block, building):
+    for trait in block['attributes']:
+        if trait['value'] == building:
+            return True
+    return False
+
+
+def score(block):
+    for trait in block['attributes']:
+        if trait['trait_type'] == 'Score: Total':
+            return trait['value']
+    return False
+
+
+def compute_score(block):
+    scores = defaultdict(float)
+    boosts = defaultdict(int)
+    for building in block['buildings']['all'].values():
+        if building['type'] == 'public':
+            boosts['res'] += building['res_boost']
+            boosts['com'] += building['com_boost']
+            boosts['ind'] += building['ind_boost']
+        else:
+            scores[building['type']] += building['score']
+
+    print(scores)
+    print(boosts)
+
+    scores['residential'] = scores['residential'] * (1 + 1.0 * boosts['res'] / 100)
+    scores['commercial'] = scores['commercial'] * (1 + 1.0 * boosts['com'] / 100)
+    scores['industrial'] = scores['industrial'] * (1 + 1.0 * boosts['ind'] / 100)
+
+    print(scores)

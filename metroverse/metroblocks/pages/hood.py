@@ -56,7 +56,7 @@ def hood(blocks=None):
         """
 
         # Expansions
-        (byscore, byboost) = mv.best_expansions(blocks, mv.BLOCKS, mv.BOOSTS)
+        (byscore, byboost) = mv.best_expansions(blocks)
         body += render_expansions(indeces, byscore, byboost, boosted_score, last_stake_update)
 
         # Blocks

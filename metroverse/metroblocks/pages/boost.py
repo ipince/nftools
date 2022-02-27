@@ -4,7 +4,7 @@ from engine import metroverse as mv
 
 
 def render_boosts(blocks=None, highlight=False, render_stacked=False):
-    active_bboosts = mv.total_boostv2(blocks, mv.BOOSTS)
+    active_bboosts = mv.active_boosts(blocks)
 
     names = set()
     if blocks is not None:
