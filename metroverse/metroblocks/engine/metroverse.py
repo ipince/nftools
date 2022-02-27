@@ -115,13 +115,14 @@ def transform_buildings(buildings, public, boosts):
         pmap[p['name']] = p
 
     for boost in boosts:
-        for blg in boost['buildings']:
-            if blg in bmap:
-                bmap[blg]['boost_name'] = boost['name']
-                bmap[blg]['pct'] = boost['pct']
-            elif blg in pmap:
-                pmap[blg]['boost_name'] = boost['name']
-                pmap[blg]['pct'] = boost['pct']
+        for building in boost['buildings']:
+            building_name = building["name"]
+            if building_name in bmap:
+                bmap[building_name]['boost_name'] = boost['name']
+                bmap[building_name]['pct'] = boost['pct']
+            elif building_name in pmap:
+                pmap[building_name]['boost_name'] = boost['name']
+                pmap[building_name]['pct'] = boost['pct']
 
     return bmap, pmap
 
@@ -200,12 +201,15 @@ def active_boosts(blocks):  # TODO: add pathway boosts
         for b in blocks:
             buildings_in_hood.extend(list(b['buildings']['all'].keys()))
 
-    buildings_counter = Counter(buildings_in_hood)
+    building_counts = Counter(buildings_in_hood)
 
     active_boosts = {}
     for boost in BOOSTS:
-        buildings_in_boost_counter = [buildings_counter[building] for building in boost["buildings"]]
-        num_stacked_boost = min(buildings_in_boost_counter)
+        building_stacks = []
+        for building in boost["buildings"]:
+            building_stacks.append(building_counts[building["name"]] // building["count"])
+        # TODO: implement partials
+        num_stacked_boost = min(building_stacks)
         if num_stacked_boost == 0:
             continue
         active_boosts[boost["name"]] = num_stacked_boost

@@ -8,8 +8,8 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
 
     names = set()
     if blocks is not None:
-        for b in blocks:
-            names.update(b['buildings']['all'].keys())
+        for block in blocks:
+            names.update(block['buildings']['all'].keys())
     large_hood = len(blocks) > 10  # TODO: move elsewhere
     s = """
     <h2 style="margin-bottom: 2">Building Boosts</h2>
@@ -42,24 +42,25 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
         s += f"<tr><td>{boost['name']}</td>"
         s += f"<td>{boost['pct']}%</td>"
 
-        for b in boost['buildings']:
+        for building in boost['buildings']:
+            building_name = building["name"]
             # which blocks have building b?
-            blocks_with_b = [block for block in blocks if b in block['buildings']['all']]
+            blocks_with_b = [block for block in blocks if building_name in block['buildings']['all']]
             count = 0
-            if b in mv.BUILDINGS:
-                count = mv.BUILDINGS[b]['count']
+            if building_name in mv.BUILDINGS:
+                count = mv.BUILDINGS[building_name]['count']
             else:
-                count = mv.PUBLIC[b]['count']
+                count = mv.PUBLIC[building_name]['count']
             pct = 100.0*count/10000
             if len(blocks_with_b) > 0:
                 # TODO: move to highlight_if
-                s += f"""<td style='background: darkseagreen'>{b} ({pct}%)<br/>"""
+                s += f"""<td style='background: darkseagreen'>{building_name} ({pct}%)<br/>"""
                 for block in blocks_with_b:
                     if highlight:
                         s += f""" <a href="#{block['num']}">#{block['num']}</a>"""
                 s += "</td>"
             else:
-                s += f"<td>{b} ({pct}%)</td>"
+                s += f"<td>{building_name} ({pct}%)</td>"
 
         if render_stacked:
             stacked = active_bboosts[boost['name']] if boost['name'] in active_bboosts else 0
