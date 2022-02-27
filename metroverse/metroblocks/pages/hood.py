@@ -52,16 +52,15 @@ def hood(blocks=None):
         # Boost table
         body += f"""
         <div>{boost.render_boosts(blocks, highlight=True, render_stacked=True)}</div>
-        <div>{boost.render_pathway_boosts(blocks)}</div>
         """
 
         # Expansions
-        (byscore, byboost) = mv.best_expansions(blocks)
-        body += render_expansions(indeces, byscore, byboost, boosted_score, last_stake_update)
-
-        # Blocks
-        for b in blocks:
-            body += f"<div class='row'>{blockspage.render_block(b)}</div>"
+        # (byscore, byboost) = mv.best_expansions(blocks)
+        # body += render_expansions(indeces, byscore, byboost, boosted_score, last_stake_update)
+        #
+        # # Blocks
+        # for b in blocks:
+        #     body += f"<div class='row'>{blockspage.render_block(b)}</div>"
         return content.with_body(body, 'hoods')
 
     except Exception as e:

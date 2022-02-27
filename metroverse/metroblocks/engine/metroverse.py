@@ -16,19 +16,6 @@ PUBLIC = None
 HOOD_THRESHOLD = 10
 DATA_PATH = "data/"
 
-PATHWAY_BOOSTS = {
-    "Railway Pathway": {
-        "name": "Railway Pathway",
-        "pathway": "rail",
-        "pct": 400,
-    },
-    "River Pathway": {
-        "name": "River Pathway",
-        "pathway": "river",
-        "pct": 800,
-    },
-}
-
 
 def last_stake_update():
     return datetime.fromtimestamp(os.path.getmtime(DATA_PATH + "staked.txt")).strftime("%Y-%m-%d %H:%M UTC")
@@ -160,9 +147,9 @@ def transform_block(block, buildings, public, boosts, staked):
 
     pathwayx = block['entities'][0]['entity_type']['name']
     if pathwayx == 'river-x-river':
-        block['pathway'] = 'river'
+        block['pathway'] = "Double River"
     elif pathwayx == 'rail-x-rail':
-        block['pathway'] = 'rail'
+        block['pathway'] = "Double Rail"
     else:
         block['pathway'] = None
 
@@ -175,6 +162,7 @@ def transform_block(block, buildings, public, boosts, staked):
     block['staked'] = block['num'] in staked
 
     return block
+
 
 # TODO: how is this being used? wtf
 def rank_blocks(blocks):
@@ -200,6 +188,7 @@ def active_boosts(blocks):  # TODO: add pathway boosts
     if blocks is not None:
         for b in blocks:
             buildings_in_hood.extend(list(b['buildings']['all'].keys()))
+            buildings_in_hood.append(b["pathway"])
 
     building_counts = Counter(buildings_in_hood)
 
@@ -207,28 +196,15 @@ def active_boosts(blocks):  # TODO: add pathway boosts
     for boost in BOOSTS:
         building_stacks = []
         for building in boost["buildings"]:
-            building_stacks.append(building_counts[building["name"]] // building["count"])
-        # TODO: implement partials
+            if building["count"] > 0:
+                building_stacks.append(building_counts[building["name"]] // building["count"])
+        # TODO: implement partials...
         num_stacked_boost = min(building_stacks)
         if num_stacked_boost == 0:
             continue
         active_boosts[boost["name"]] = num_stacked_boost
 
     return active_boosts
-
-
-def get_active_pathway_boosts(blocks):  # TODO: MERGE
-    active_pboosts = {}
-    for pboost in PATHWAY_BOOSTS.values():
-        count = 0
-        for b in blocks:
-            if b['pathway'] == pboost['pathway']:
-                count += 1
-        active = count // 3
-        if active > 0:
-            active_pboosts[pboost['name']] = active
-
-    return active_pboosts
 
 
 def large_hood_multiplier(num_blocks):
@@ -254,19 +230,13 @@ def boost_formula(num_blocks, num_stacked_boost):
 
 def hood_boost(blocks):
     tboost = 0
-    active_bboosts = active_boosts(blocks)
+    active_bboosts = active_boosts(blocks)  # TODO: rename
     for boost_name in active_bboosts:
         for candidate in BOOSTS:  # TODO: use a dict instead
             if candidate["name"] == boost_name:
                 theoretical_boost_perc = candidate["bps"]
                 actual_boost_perc = boost_formula(len(blocks), active_bboosts[boost_name]) * theoretical_boost_perc
                 tboost += actual_boost_perc
-
-    active_pboosts = get_active_pathway_boosts(blocks)
-    for boost in active_pboosts:
-        theoretical_boost_perc = PATHWAY_BOOSTS[boost]['pct']
-        actual_boost_perc = boost_formula(len(blocks), active_pboosts[boost]) * theoretical_boost_perc
-        tboost += actual_boost_perc
 
     score = sum(map(lambda b: b['scores']['total'], blocks))
 

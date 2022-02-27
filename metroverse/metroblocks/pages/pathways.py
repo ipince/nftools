@@ -4,8 +4,8 @@ from engine import metroverse as mv
 
 
 def pathways():
-    double_river = [b for b in mv.BLOCKS if b['pathway'] == 'river']
-    double_rail = [b for b in mv.BLOCKS if b['pathway'] == 'rail']
+    double_river = [b for b in mv.BLOCKS if b['pathway'] == "Double River"]
+    double_rail = [b for b in mv.BLOCKS if b['pathway'] == "Double Rail"]
     body = f"""
     <h1>Pathways</h1>
     <p>Curious about which blocks have double river or double rail? Here you go!
