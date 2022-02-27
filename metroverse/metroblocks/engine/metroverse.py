@@ -256,6 +256,18 @@ def hood_boost(blocks):
 
 
 def best_expansions(hood):
+    """Returns two sorted lists containing the best expansions for a hood.
+
+    "Best" is subjective. This function returns the best single new block
+    to expand the hood with. The first list optimizes by score, and the
+    second one optimizes by boost.
+
+    If you want to add more than 1 block, calling this function repeatedly
+    might not yield the best-optimized hood (i.e. optimization is not greedy).
+
+    Each of the resulting lists looks like this:
+        [ { "score": 1400, "boost": 750 (bps), "block": <Full Block> } ]
+    """
     # brute force: try adding every other block and calculate!
     hood_nums = [b['num'] for b in hood]
     hood_copy = hood.copy()

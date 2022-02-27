@@ -1,4 +1,5 @@
 import json
+import traceback
 
 from flask import Flask, request
 
@@ -28,6 +29,17 @@ def api_hood(blocknums=None):
 
     # TODO: validate input is numbers.
     return as_json(api.hood(blocknums))
+
+
+@application.route("/api/expansions", methods=["POST"])
+def api_expand():
+    # TODO: have better input: { "blocks": [1, 2, 3], "exclude_staked": true (default=false), "limit": 20 (default 100, max 100) }
+    try:
+        blocknums = request.get_json(force=True)
+        return as_json(api.hood_expansions(blocknums))
+    except Exception:
+        traceback.print_exception()
+        return json.dumps({"error": "Unable to parse input. It should be valid JSON"})
 
 
 def as_json(object):

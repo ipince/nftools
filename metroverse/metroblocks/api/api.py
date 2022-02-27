@@ -53,3 +53,29 @@ def hood(blocknums):
         "large_hood_multiplier": lhm,
     }
     return data
+
+
+# TODO: implement proper pagination
+def hood_expansions(blocknums, exclude_staked=False, limit=100):
+    blocks = blocks_from_indeces(blocknums)
+    (byscore, byboost) = mv.best_expansions(blocks)
+
+    # Apply limits
+    byscore = byscore[:limit]
+    byboost = byboost[:limit]
+
+    # No need to export all info about a block, so minimize here.
+    for expansions in [byscore, byboost]:
+        for entry in expansions:
+            entry["block"] = {
+                "num": entry["block"]["num"],
+                "name": entry["block"]["name"],
+                "staked": entry["block"]["staked"],
+            }
+
+    data = {
+        "by_score": byscore,
+        "by_boost": byboost,
+    }
+
+    return data
