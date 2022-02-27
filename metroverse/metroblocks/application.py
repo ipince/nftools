@@ -27,7 +27,11 @@ def api_hood(blocknums=None):
             return json.dumps({"error": "Unable to parse input. It should be valid JSON and look like '[1, 2, 3]'"})
 
     # TODO: validate input is numbers.
-    return api.hood(blocknums)
+    return as_json(api.hood(blocknums))
+
+
+def as_json(object):
+    return json.dumps(object, indent=2)
 
 
 @application.route('/refresh-staked-blocks')

@@ -1,5 +1,3 @@
-import json
-
 from engine import metroverse as mv
 
 
@@ -70,8 +68,3 @@ def hood(blocknums):
         "large_hood_multiplier": lhm,
     }
     return data
-    # return as_json(data)
-
-
-def as_json(object):
-    return json.dumps(object, indent=2)
