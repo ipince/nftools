@@ -1,4 +1,6 @@
-from engine import blockchain, metroverse as mv, data
+from engine import blockchain
+from engine import data
+from engine import metroverse as mv
 
 
 def update_hoods_metadata(refresh_owners=False):
@@ -9,7 +11,7 @@ def update_hoods_metadata(refresh_owners=False):
         print("Refreshing ownership data from the blockchain")
         blockchain.get_all_owners()
     print("Reading owner data")
-    owners, _ = data.load("../data/owners_all.json")
+    owners, _ = data.load("data/owners_all.json")
 
     print("Calculating hood size/score/boost")
     hoods = {}
@@ -57,7 +59,7 @@ def update_hoods_metadata(refresh_owners=False):
         last_size = hoods[o]['size']
         last_boost = hoods[o]['boost']
 
-    data.save(hoods, "../data/hoods.json")
+    data.save(hoods, "data/hoods.json")
 
 
 update_hoods_metadata(refresh_owners=True)
