@@ -112,10 +112,15 @@ def render_expansions(indeces, expansions, boosted_score, last_stake_update, sta
     # By boost
     body += f"""
     <div class="column"><h3>By Boost (top 100)</h3><table>
-    <tr><th>Block</th><th>Staked?<br><small>as of {last_stake_update}</small></th><th>New Boost</th><th>New Score</th><th>Score Delta</th></tr>
+    <tr><th>Block</th>
+    <th>Staked?<br><small>as of {last_stake_update}</small></th>
+    <th>New Boost</th>
+    <th>New Score</th>
+    <th>Score Delta</th>
+    </tr>
     """
     for i in range(100):
-        delta = util.fmt_score(byscore[i]['score'] - boosted_score)
+        delta = util.fmt_score(byboost[i]['score'] - boosted_score)
         expand = f"/hood/{','.join(map(str, indeces + [byboost[i]['block']['num']]))}"
         staked = 'Yes' if byboost[i]['block'][
             'staked'] else f"No (<a href={util.opensea(byboost[i]['block'])}>OpenSea</a>)"
