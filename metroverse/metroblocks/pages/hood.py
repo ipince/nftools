@@ -9,7 +9,7 @@ from . import boost
 from . import content
 from . import util
 
-HOOD_SIZE_LIMIT = 150
+HOOD_SIZE_LIMIT = 200
 
 
 def hood(blocks=None):
