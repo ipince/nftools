@@ -62,7 +62,7 @@ def render_boosts(blocks=None, highlight=False, render_stacked=False):
                 s += "<br />"
                 for block in blocks_with_b:
                     if highlight:
-                        s += f""" <a href="#{block['num']}">#{block['num']}</a>"""
+                        s += f""" <a target="_blank" href="/b/{block['num']}">#{block['num']}</a>"""
             s += "</td>"
 
         if render_stacked:

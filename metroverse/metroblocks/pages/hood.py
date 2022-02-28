@@ -60,10 +60,6 @@ def hood(blocks=None):
         expansions = api.hood_expansions(indeces, include_staked=include_staked)
         body += render_expansions(indeces, expansions, boosted_score, last_stake_update, include_staked)
 
-        # Blocks
-        for b in blocks:
-            body += f"<div class='row'>{blockspage.render_block(b)}</div>"
-
         return content.with_body(body, 'hoods')
 
     except Exception as e:
@@ -98,10 +94,9 @@ def render_expansions(indeces, expansions, boosted_score, last_stake_update, sta
     for i in range(100):
         delta = util.fmt_score(byscore[i]['score'] - boosted_score)
         expand = f"/hood/{','.join(map(str, indeces + [byscore[i]['block']['num']]))}"
-        staked = 'Yes' if byscore[i]['block'][
-            'staked'] else f"No (<a href={util.opensea(byscore[i]['block'])}>OpenSea</a>)"
+        staked = 'Yes' if byscore[i]['block']['staked'] else f"No (<a target='_blank' href={util.opensea(byscore[i]['block'])}>OpenSea</a>)"
         body += f"""
-        <tr><td><a href="/b/{byscore[i]['block']['num']}">{byscore[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
+        <tr><td><a target="_blank" href="/b/{byscore[i]['block']['num']}">{byscore[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
         <td>{staked}</td>
         <td>{byscore[i]['boost'] / 100}%</td>
         <td>{util.fmt_score(byscore[i]['score'])}</td>
@@ -122,10 +117,9 @@ def render_expansions(indeces, expansions, boosted_score, last_stake_update, sta
     for i in range(100):
         delta = util.fmt_score(byboost[i]['score'] - boosted_score)
         expand = f"/hood/{','.join(map(str, indeces + [byboost[i]['block']['num']]))}"
-        staked = 'Yes' if byboost[i]['block'][
-            'staked'] else f"No (<a href={util.opensea(byboost[i]['block'])}>OpenSea</a>)"
+        staked = 'Yes' if byboost[i]['block']['staked'] else f"No (<a target='_blank' href={util.opensea(byboost[i]['block'])}>OpenSea</a>)"
         body += f"""
-        <tr><td><a href="/b/{byboost[i]['block']['num']}">{byboost[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
+        <tr><td><a target="_blank" href="/b/{byboost[i]['block']['num']}">{byboost[i]['block']['name']}</a> (<a href={expand}>expand!</a>)</td>
         <td>{staked}</td>
         <td>{byboost[i]['boost'] / 100}%</td>
         <td>{util.fmt_score(byboost[i]['score'])}</td>
