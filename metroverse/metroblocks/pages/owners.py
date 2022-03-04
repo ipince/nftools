@@ -8,7 +8,7 @@ from engine import metroverse as mv
 def owners():
     hoods, last_updated = data.load("data/hoods.json")  # TODO: load once into memory
     sorted_owners = sorted(hoods.keys(),
-                           key=lambda o: (hoods[o]['size'], -hoods[o]['boost_rank_in_size'], -min(hoods[o]['blocks'])),
+                           key=lambda o: (hoods[o]['size'], -hoods[o]['boost_rank_in_size'], -hoods[o]['score_rank']),
                            reverse=True)
     body = f"""
     <h1>Owners (aka Whale Watch)</h1>
