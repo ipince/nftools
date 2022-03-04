@@ -34,14 +34,8 @@ contract = w3.eth.contract(BLOCK_TOKEN_CONTRACT_ADDRESS, abi=METROVERSE_ABI)
 
 def refresh_staked_blocks():
     staked = contract.functions.tokensOfOwner(VAULT_CONTRACT_ADDRESS).call()
-    with open('data/staked.txt', 'w') as f:
-        f.write('\n'.join([str(s) for s in staked]))
+    data.save_staked(staked, datetime.utcnow())
     return staked
-
-
-def load_staked():
-    with open('data/staked.txt', 'r') as f:
-        return [int(l) for l in f.read().splitlines()]
 
 
 def get_erc721_transactions(wallet, contract, endblock=99999999):

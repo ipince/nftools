@@ -1,5 +1,8 @@
 import json
 import traceback
+import redis
+import dotenv
+import os
 
 from flask import Flask, request
 
@@ -8,10 +11,23 @@ import pages
 from api import api
 from engine import blockchain
 
+dotenv.load_dotenv()
+r = redis.Redis(host=os.getenv("REDIS_HOST"))
 
 # EB looks for an 'application' callable by default.
 application = Flask(__name__)
 application.url_map.strict_slashes = False
+
+
+@application.route("/redis/set/<key>/<value>")
+def redis_set(key, value):
+    r.set(key, value)
+    return f"{key} = {value}"
+
+
+@application.route("/redis/get/<key>")
+def redis_get(key):
+    return f"{key} = {r.get(key)}"
 
 
 @application.route('/api/hood', methods=["GET", "POST"])

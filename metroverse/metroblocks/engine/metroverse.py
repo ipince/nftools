@@ -18,7 +18,7 @@ DATA_PATH = "data/"
 
 
 def last_stake_update():
-    return datetime.fromtimestamp(os.path.getmtime(DATA_PATH + "staked.txt")).strftime("%Y-%m-%d %H:%M UTC")
+    return data.load_staked_ts().strftime("%Y-%m-%d %H:%M UTC")
 
 
 def load_owners():
@@ -35,7 +35,7 @@ def load_all():
     BOOSTS = boosts
 
     (buildings, public) = transform_buildings(buildings, public, boosts)
-    blocks = transform(blocks, buildings, public, boosts, staked)
+    blocks = transform(blocks, buildings, public, staked)
     rank_blocks(blocks)
     buildings_by_rarity(blocks, buildings, public)
 
@@ -50,14 +50,8 @@ def load_data():
     buildings = read_json(DATA_PATH + "buildings_non_public.json")
     public = read_json(DATA_PATH + "buildings_public.json")
     boosts = read_json(DATA_PATH + "boosts.json")
-    staked = read_staked(DATA_PATH + "staked.txt")
+    staked = data.load_staked()
     return blocks, buildings, public, boosts, staked
-
-
-def read_staked(path):
-    with open(path, 'r') as f:
-        staked = list(map(int, f.read().splitlines()))
-        return staked
 
 
 def read_json(path):
@@ -114,14 +108,14 @@ def transform_buildings(buildings, public, boosts):
     return bmap, pmap
 
 
-def transform(blocks, buildings, public, boosts, staked):
+def transform(blocks, buildings, public, staked):
     transformed = []
     for b in blocks:
-        transformed.append(transform_block(b, buildings, public, boosts, staked))
+        transformed.append(transform_block(b, buildings, public, staked))
     return transformed
 
 
-def transform_block(block, buildings, public, boosts, staked):
+def transform_block(block, buildings, public, staked):
     # TODO: handle repeated!
     scores = {}
     bldgs = defaultdict(dict)
@@ -159,6 +153,7 @@ def transform_block(block, buildings, public, boosts, staked):
     (bscore, tboost) = hood_boost([block])
     block['scores']['boosted'] = bscore
     block['scores']['pct'] = tboost/100
+    # TODO: should refresh blocks with staked data every so often, not just at load time
     block['staked'] = block['num'] in staked
 
     return block
