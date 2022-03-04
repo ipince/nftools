@@ -7,11 +7,11 @@ import os
 from flask import Flask, request
 
 import pages
+import cronjob
 
 from api import api
-from engine import blockchain
 
-dotenv.load_dotenv()
+dotenv.load_dotenv()  # TODO: make localhost easy
 r = redis.Redis(host=os.getenv("REDIS_HOST"))
 
 # EB looks for an 'application' callable by default.
@@ -28,6 +28,15 @@ def redis_set(key, value):
 @application.route("/redis/get/<key>")
 def redis_get(key):
     return f"{key} = {r.get(key)}"
+
+
+# @application.route("/env")
+def env():
+    ks = sorted(os.environ.keys())
+    r = ""
+    for k in ks:
+        r += f"{k}={os.environ[k]}<br/>"
+    return r
 
 
 @application.route('/api/hood', methods=["GET", "POST"])
@@ -62,13 +71,17 @@ def as_json(object):
     return json.dumps(object, indent=2)
 
 
-@application.route('/refresh-staked-blocks')
+@application.route('/refresh/owners')
 def refresh_staked_blocks():
-    # TODO: protect this somehow!
     if os.getenv("ENV") != "test":
         return "Skipping refresh because this is not the test env"
-    num = blockchain.refresh_staked_blocks()
-    return f"there are {num} staked blocks"
+
+    try:
+        # This will refresh staked blocks too.
+        cronjob.update_hoods_metadata(refresh_owners=True)
+        return "done"
+    except Exception as e:
+        return e.with_traceback()
 
 
 @application.route('/')

@@ -30,6 +30,14 @@ def rget(k):
     return r.get(k)
 
 
+def save_json(k, obj):
+    rset(k, json.dumps(obj))
+
+
+def load_json(k):
+    return json.loads(rget(k))
+
+
 def save_staked(staked, ts):
     rset("staked", json.dumps(staked))
     rset("staked_ts", ts.isoformat())
@@ -44,3 +52,24 @@ def load_staked():
 
 def load_staked_ts():
     return datetime.fromisoformat(rget("staked_ts").decode("utf-8"))
+
+
+def save_owners(owners, key):
+    # Convert from {str->set} to {str->list}
+    o = {k: list(v) for k, v in owners.items()}
+    rset(key, json.dumps(o))
+    rset("owners_ts", datetime.utcnow().isoformat())
+
+
+def load_owners():
+    return json.loads(rget("owners_all"))
+
+
+def save_hoods(hoods):
+    rset("hoods", json.dumps(hoods))
+    rset("hoods_ts", datetime.utcnow().isoformat())
+
+
+def load_hoods():
+    ts = datetime.fromisoformat(rget("hoods_ts").decode("utf-8"))
+    return json.loads(rget("hoods")), ts

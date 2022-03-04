@@ -138,21 +138,15 @@ def get_all_owners():
     owners = defaultdict(set)
     # 1) Get owners of staked blocks by using Etherscan.
     owners, unresolved = get_staked_owners(owners, staked)
-    save_owners(owners, 'data/owners_staked.json')
+    data.save_owners(owners, "owners_staked")
 
     # 2) Resolve owners who staked at mint-time.
     owners = get_immediate_stakers(owners, unresolved)
 
     # 3) Get owners of unstaked blocks by calling Token contract directly.
     owners = get_unstaked_owners(owners, unstaked)
-    save_owners(owners, 'data/owners_all.json')
+    data.save_owners(owners, "owners_all")  # TODO: move to data
     return owners
-
-
-def save_owners(owners, file):
-    # Convert from {str->set} to {str->list}
-    o = {k: list(v) for k, v in owners.items()}
-    data.save(o, file)
 
 
 def reverse_ens(addresses):

@@ -6,13 +6,14 @@ from engine import metroverse as mv
 
 
 def owners():
-    hoods, last_updated = data.load("data/hoods.json")  # TODO: load once into memory
+    hoods, last_updated = data.load_hoods()  # TODO: cache for a couple mins at least
     sorted_owners = sorted(hoods.keys(),
                            key=lambda o: (hoods[o]['size'], -hoods[o]['boost_rank_in_size'], -hoods[o]['score_rank']),
                            reverse=True)
     body = f"""
     <h1>Owners (aka Whale Watch)</h1>
-    <p>This is a list of all block owners, <em>including owners of staked blocks</em>, as of <b>{last_updated}</b>.
+    <p>This is a list of all block owners, <em>including owners of staked blocks</em>,
+    as of <b>{last_updated.strftime("%Y-%m-%d %H:%M UTC")}</b> (refreshes hourly).
     <p>In total, there are <b>{len(hoods)}</b> <em>true</em> distinct owners.
     <p>
     <table style="table-layout: fixed; overflow: scroll; width: 100%">

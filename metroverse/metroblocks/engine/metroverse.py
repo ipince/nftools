@@ -21,13 +21,6 @@ def last_stake_update():
     return data.load_staked_ts().strftime("%Y-%m-%d %H:%M UTC")
 
 
-def load_owners():
-    file = DATA_PATH + "owners_all.json"
-    owners, last_updated = data.load(file)
-    owners = sorted_owners(owners)
-    return owners, last_updated
-
-
 def load_all():
     print("Loading game data...")
     (blocks, buildings, public, boosts, staked) = load_data()
@@ -46,10 +39,13 @@ def load_all():
 
 
 def load_data():
+    # static
     blocks = read_json(DATA_PATH + "all_blocks_slim.json")
     buildings = read_json(DATA_PATH + "buildings_non_public.json")
     public = read_json(DATA_PATH + "buildings_public.json")
     boosts = read_json(DATA_PATH + "boosts.json")
+
+    # dynamic (TODO: load more often)
     staked = data.load_staked()
     return blocks, buildings, public, boosts, staked
 
@@ -281,21 +277,6 @@ def best_expansions(hood, include_staked=False):
     best_by_boost = sorted(options, key=lambda o: (o['boost'], o['score']), reverse=True)
 
     return best_by_score, best_by_boost
-
-
-def sorted_owners(owners):
-    """Return the owners list ordered by number of blocks, and then min block #"""
-    sorted_keys = sorted(owners.keys(), key=lambda o: (-len(owners[o]), min(owners[o])))
-    sorted_owners = [(k, sorted(list(owners[k]))) for k in sorted_keys]
-    return sorted_owners
-
-
-def print_owners(owners):
-    total = 0
-    for (owner, blocks) in sorted_owners(owners):
-        print(f"{owner}: {blocks}")
-        total += len(blocks)
-    print(f"Found {len(owners)} distinct owners for {total} BLOCKS")
 
 
 # Load the game data needed for this module.
