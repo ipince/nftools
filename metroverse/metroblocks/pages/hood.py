@@ -9,7 +9,8 @@ from . import boost
 from . import content
 from . import util
 
-HOOD_SIZE_LIMIT = 200
+HOOD_SIZE_LIMIT = 300
+BLOCK_RENDER_LIMIT = 50
 
 
 def hood(blocks=None):
@@ -60,6 +61,12 @@ def hood(blocks=None):
         expansions = api.hood_expansions(indeces, include_staked=include_staked)
         body += render_expansions(indeces, expansions, boosted_score, last_stake_update, include_staked)
 
+        # Blocks
+        if len(blocks) <= BLOCK_RENDER_LIMIT:
+            body += f"<h1>Blocks (only first {BLOCK_RENDER_LIMIT})</h1>"
+            for b in blocks:
+                body += f"<div class='row'>{blockspage.render_block(b)}</div>"
+
         return content.with_body(body, 'hoods')
 
     except Exception as e:
@@ -85,6 +92,7 @@ def render_expansions(indeces, expansions, boosted_score, last_stake_update, sta
     <p>
     <div class="row">
     """
+
     # By score
     body += f"""
     <div class="column"><h3>By Score (top 100)</h3>
@@ -104,6 +112,7 @@ def render_expansions(indeces, expansions, boosted_score, last_stake_update, sta
     body += """
     </table></div>
     """
+
     # By boost
     body += f"""
     <div class="column"><h3>By Boost (top 100)</h3><table>
