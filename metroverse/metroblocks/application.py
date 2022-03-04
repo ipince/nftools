@@ -65,6 +65,8 @@ def as_json(object):
 @application.route('/refresh-staked-blocks')
 def refresh_staked_blocks():
     # TODO: protect this somehow!
+    if os.getenv("ENV") != "test":
+        return "Skipping refresh because this is not the test env"
     num = blockchain.refresh_staked_blocks()
     return f"there are {num} staked blocks"
 
