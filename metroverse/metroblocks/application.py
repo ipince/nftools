@@ -91,5 +91,5 @@ application.add_url_rule('/faq', 'faq', pages.faq)
 if __name__ == "__main__":
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.
-    application.debug = True
+    application.debug = os.getenv("ENV") != "prod"
     application.run()
