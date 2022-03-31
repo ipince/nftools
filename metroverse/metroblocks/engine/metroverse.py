@@ -36,6 +36,7 @@ def load_all():
     BLOCKS = blocks
     BUILDINGS = buildings
     PUBLIC = public
+    print("Done")
 
 
 def load_data():
@@ -105,6 +106,7 @@ def transform_buildings(buildings, public, boosts):
 
 
 def transform(blocks, buildings, public, staked):
+    print(f"Transforming {len(blocks)} blocks")
     transformed = []
     for b in blocks:
         transformed.append(transform_block(b, buildings, public, staked))
@@ -122,6 +124,9 @@ def transform_block(block, buildings, public, staked):
             scores[ttype] = value  # deprecate others
             if ttype == "Score: Total":
                 scores['total'] = value
+        elif ttype == "Buildings: Launcher":
+            bldgs['lau'][value] = buildings[value]
+            bldgs['all'][value] = buildings[value]
         elif ttype == "Buildings: Residential":
             bldgs['res'][value] = buildings[value]
             bldgs['all'][value] = buildings[value]

@@ -32,12 +32,13 @@ def block(block_number):
         return content.with_body(body, 'blocks')
     except Exception:
         traceback.print_exc()
-        return content.with_body("Please enter a block number between 1 and 10000", 'blocks')
+        return content.with_body(
+            "Please enter a block number between 1 and 17088 (revealed blocks)", 'blocks')
 
 
 def render_block(block):
     strs = []
-    types = ['res', 'com', 'ind']
+    types = ['lau', 'res', 'com', 'ind']
     for t in types:
         bldg_strs = []
         bldgs = list(block['buildings'][t].values())
@@ -61,19 +62,20 @@ def render_block(block):
     pathway_emoji = "🚆" if block['pathway'] == ['rail'] else ("🚢" if block['pathway'] == 'river' else "")
     return f"""
 <div>
-<h1 style="margin-bottom: 0"><a id="{block['num']}">{block['name']}</a> (<a href="/ranks">rank</a> {block['rank']}/10000)</h1>
+<h1 style="margin-bottom: 0"><a id="{block['num']}">{block['name']}</a> (<a href="/ranks">rank</a> {block['rank']})</h1>
 <small>(view on <a href='https://blocks.metroverse.com/{bnum}'>Metroverse</a>; view on <a href={util.opensea(block)}>OpenSea</a>; this block is {"" if block['staked'] else "<b>not</b>"} staked as of {mv.last_stake_update()})
 </small>
 
 <p>Total Score: <b>{block['scores']['Score: Total']}</b>
-<p>Pathway Boost (2 of same kind): {block['pathway']} {pathway_emoji}
-<p>Residential (Score {block['scores']['Score: Residential']}):
+<p><b>Pathway Boost</b> (2 of same kind): {block['pathway']} {pathway_emoji}
+<p><b>Launcher</b>: {strs[0][0] if len(strs[0]) > 0 else 'None'}
+<p><b>Residential</b> (Score {block['scores']['Score: Residential']}):
     <ul><li>{'<li>'.join(strs[0])}</ul>
-<p>Commercial (Score {block['scores']['Score: Commercial']}):
+<p><b>Commercial</b> (Score {block['scores']['Score: Commercial']}):
     <ul><li>{'<li>'.join(strs[1])}</ul>
-<p>Industrial (Score {block['scores']['Score: Industrial']}):
+<p><b>Industrial</b> (Score {block['scores']['Score: Industrial']}):
     <ul><li>{'<li>'.join(strs[2])}</ul>
-<p>Public:
+<p><b>Public</b>:
     <ul><li>{'<li>'.join(pubs)}</ul>
 </div>
 """
